@@ -40,12 +40,8 @@ type Course struct {
 	ReserveQueue util.Queue[StudentID]
 	// When is the exam of this course?
 	ExamTime time.Time
-	// On which days the class is being held?
-	ClassDays []time.Weekday
-	// When is the start time of the class?
-	ClassStartTime time.Time
-	// When is the start end of the class?
-	ClassEndTime time.Time
+	// The time and days which class is held on
+	ClassHeldTime ClassTime
 	// Does this class has a sex lock?
 	SexLock SexLock
 	// The mutex to work with this course
