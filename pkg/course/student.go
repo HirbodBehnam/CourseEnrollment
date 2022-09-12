@@ -115,15 +115,82 @@ func (s *Student) DisenrollCourse(courses *Courses, courseID CourseID) error {
 	}
 	course := courses.GetCourse(courseID, groupID)
 	if course == nil {
-		panic(fmt.Sprintf("invalid registered lesson %d-%d", courseID, groupID))
+		panic(fmt.Sprintf("invalid registered lesson %d-%d for user %d", courseID, groupID, s.ID))
 	}
 	// Try to disenroll
+	// TODO: move panic inside DisenrollStudent
 	if !course.DisenrollStudent(s.ID) {
 		panic(fmt.Sprintf("user %d has lesson %d-%d in their registered courses but lesson map does not have this user", s.ID, courseID, groupID))
 	}
 	// Remove from map
 	delete(s.RegisteredCourses, courseID)
 	s.RegisteredUnits -= course.Units
+	s.RemainingActions--
+	return nil
+}
+
+// ChangeGroup will atomically change group of a user in a course
+func (s *Student) ChangeGroup(courses *Courses, courseID CourseID, destinationGroupID GroupID) error {
+	// We check the start time at very first
+	if !s.IsEnrollTimeOK() {
+		return NotEnrollmentTimeErr
+	}
+	// Lock the user to do stuff with they
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	// Check the actions
+	if s.RemainingActions == 0 {
+		return NoRemainingActionsErr
+	}
+	// Get the course
+	sourceGroupID, exists := s.RegisteredCourses[courseID]
+	if !exists {
+		return NotExistsErr
+	}
+	// Check same group ID
+	if sourceGroupID == destinationGroupID {
+		return PlayedYourselfErr
+	}
+	// Now, get the courses
+	sourceCourse := courses.GetCourse(courseID, sourceGroupID)
+	if sourceCourse == nil {
+		panic(fmt.Sprintf("invalid registered lesson %d-%d for user %d", courseID, sourceGroupID, s.ID))
+	}
+	destinationCourse := courses.GetCourse(courseID, destinationGroupID)
+	if destinationCourse == nil {
+		return NotExistsErr
+	}
+	// Check the time of the course with registered courses (except the source)
+	for registeredCourseID, registeredGroupID := range s.RegisteredCourses {
+		// We are going to remove this, so we don't check it
+		if registeredCourseID == courseID {
+			continue
+		}
+		// Get the course
+		registeredCourse := courses.GetCourse(registeredCourseID, registeredGroupID)
+		if registeredCourse == nil {
+			panic(fmt.Sprintf("inconsistent user state: course %d group %d is registered but not found", registeredCourseID, registeredGroupID))
+		}
+		// Check exam time
+		if registeredCourse.ExamTime.Load() == destinationCourse.ExamTime.Load() {
+			return ExamConflictErr{
+				CourseID: registeredCourse.ID,
+				GroupID:  registeredCourse.GroupID,
+			}
+		}
+		// Check time
+		if registeredCourse.ClassHeldTime.Intersects(&destinationCourse.ClassHeldTime) {
+			return ClassTimeConflictErr{
+				CourseID: registeredCourse.ID,
+				GroupID:  registeredCourse.GroupID,
+			}
+		}
+	}
+	// Change the group
+	if !sourceCourse.ChangeGroupOfStudent(s.ID, destinationCourse) {
+		return NoCapacityLeftErr
+	}
+	// Done!
 	s.RemainingActions--
 	return nil
 }

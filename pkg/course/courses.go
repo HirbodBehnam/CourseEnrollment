@@ -2,6 +2,7 @@ package course
 
 import (
 	"CourseEnrollment/pkg/util"
+	"fmt"
 	"sync"
 	"sync/atomic"
 )
@@ -74,6 +75,12 @@ func (c *Course) EnrollStudent(studentID StudentID) bool {
 	// Lock the course and unlock it when we are leaving
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	// Could not enroll the course
+	return c.threadUnsafeEnrollStudent(studentID)
+}
+
+// threadUnsafeEnrollStudent does EnrollStudent but without locking the course
+func (c *Course) threadUnsafeEnrollStudent(studentID StudentID) bool {
 	// At first check the registered count
 	if len(c.RegisteredStudents) < c.Capacity {
 		c.RegisteredStudents[studentID] = struct{}{}
@@ -95,6 +102,12 @@ func (c *Course) DisenrollStudent(studentID StudentID) bool {
 	// Lock the course and unlock it when we are leaving
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	return c.threadUnsafeDisenrollStudent(studentID)
+}
+
+// threadUnsafeDisenrollStudent is basically DisenrollStudent but without locking
+// the course
+func (c *Course) threadUnsafeDisenrollStudent(studentID StudentID) bool {
 	// Check registered list
 	if _, registered := c.RegisteredStudents[studentID]; registered {
 		delete(c.RegisteredStudents, studentID)
@@ -108,4 +121,39 @@ func (c *Course) DisenrollStudent(studentID StudentID) bool {
 	}
 	// Otherwise remove from queue
 	return c.ReserveQueue.Remove(studentID)
+}
+
+// ChangeGroupOfStudent tries to change the group of a student between two courses
+func (c *Course) ChangeGroupOfStudent(studentID StudentID, other *Course) bool {
+	// Check courses
+	if c.ID != other.ID {
+		panic("different courses provided")
+	}
+	if c.GroupID == other.GroupID {
+		panic("same group provided")
+	}
+	// For locking, we at first lock the smaller group ID
+	// to avoid deadlocks
+	if c.GroupID < other.GroupID {
+		c.mu.Lock()
+		other.mu.Lock()
+	} else {
+		other.mu.Lock()
+		c.mu.Lock()
+	}
+	defer c.mu.Unlock()
+	defer other.mu.Unlock()
+	// Check if user exists in this course
+	if _, existsInRegistered := c.RegisteredStudents[studentID]; !existsInRegistered {
+		if c.ReserveQueue.Exists(studentID) == -1 {
+			panic(fmt.Sprintf("student %d does not exists in course %d-%d", studentID, c.ID, c.GroupID))
+		}
+	}
+	// Now try to add it to other course
+	if !other.threadUnsafeEnrollStudent(studentID) {
+		return false // we could not enroll user due to capacity
+	}
+	// Now remove the user from this course
+	c.threadUnsafeDisenrollStudent(studentID)
+	return true
 }

@@ -49,3 +49,6 @@ var NoCapacityLeftErr = errors.New("this course's capacity is filled")
 // NoRemainingActionsErr means that user cannot disenroll or change group because of lack of
 // remaining actions
 var NoRemainingActionsErr = errors.New("no more remaining actions left")
+
+// PlayedYourselfErr happens when user tries to change group to its own registered group
+var PlayedYourselfErr = errors.New("source and destination group ID is same")

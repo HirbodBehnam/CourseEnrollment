@@ -390,10 +390,10 @@ func TestStudentDisenrollCourse(t *testing.T) {
 			RemainingActions: 10,
 		}
 		assert.ErrorIs(t, std.DisenrollCourse(&courses, CourseID(10)), NotExistsErr)
-		assert.PanicsWithValue(t, "invalid registered lesson 2-2", func() {
+		assert.PanicsWithValue(t, "invalid registered lesson 2-2 for user 1", func() {
 			_ = std.DisenrollCourse(&courses, CourseID(2))
 		})
-		assert.PanicsWithValue(t, "invalid registered lesson 100-1", func() {
+		assert.PanicsWithValue(t, "invalid registered lesson 100-1 for user 1", func() {
 			_ = std.DisenrollCourse(&courses, CourseID(100))
 		})
 	})
@@ -431,6 +431,247 @@ func TestStudentDisenrollCourse(t *testing.T) {
 		assert.Equal(t, uint8(initialRemainingActions-1), std.RemainingActions)
 		assert.Len(t, std.RegisteredCourses, 0)
 		assert.Len(t, courses.courses[CourseID(1)][0].RegisteredStudents, 0)
+	})
+}
+
+func TestStudentChangeGroup(t *testing.T) {
+	clk := clock.NewMock()
+	studentClock = clk
+	courses := Courses{
+		courses: map[CourseID][]*Course{
+			CourseID(1): {
+				{
+					ID:                 CourseID(1),
+					GroupID:            GroupID(1),
+					Units:              1,
+					Capacity:           5,
+					RegisteredStudents: map[StudentID]struct{}{},
+					ReserveCapacity:    5,
+					ReserveQueue:       util.NewQueue[StudentID](),
+					ExamTime:           newAtomicTimeUnix(time.Date(2022, 9, 12, 1, 0, 0, 0, time.UTC)),
+					ClassHeldTime: NewClassTime(
+						[]time.Weekday{time.Wednesday},
+						TimeOnly{13 * 60},
+						TimeOnly{15 * 60},
+					),
+				},
+				{
+					ID:                 CourseID(1),
+					GroupID:            GroupID(2),
+					Units:              1,
+					Capacity:           5,
+					RegisteredStudents: map[StudentID]struct{}{},
+					ReserveCapacity:    5,
+					ReserveQueue:       util.NewQueue[StudentID](),
+					ExamTime:           newAtomicTimeUnix(time.Date(2022, 9, 12, 1, 0, 0, 0, time.UTC)),
+					ClassHeldTime: NewClassTime(
+						[]time.Weekday{time.Wednesday},
+						TimeOnly{15 * 60},
+						TimeOnly{17 * 60},
+					),
+				},
+			},
+			CourseID(2): {
+				{
+					ID:                 CourseID(2),
+					GroupID:            GroupID(1),
+					Units:              3,
+					Capacity:           5,
+					RegisteredStudents: map[StudentID]struct{}{},
+					ReserveCapacity:    5,
+					ReserveQueue:       util.NewQueue[StudentID](),
+					ExamTime:           newAtomicTimeUnix(time.Date(2022, 9, 12, 1, 0, 0, 0, time.UTC)),
+					ClassHeldTime: NewClassTime(
+						[]time.Weekday{time.Friday},
+						TimeOnly{13*60 + 30},
+						TimeOnly{15 * 60},
+					),
+				},
+				{
+					ID:                 CourseID(2),
+					GroupID:            GroupID(2),
+					Units:              3,
+					Capacity:           5,
+					RegisteredStudents: map[StudentID]struct{}{},
+					ReserveCapacity:    5,
+					ReserveQueue:       util.NewQueue[StudentID](),
+					ExamTime:           newAtomicTimeUnix(time.Date(2022, 9, 12, 5, 0, 0, 0, time.UTC)),
+					ClassHeldTime: NewClassTime(
+						[]time.Weekday{time.Saturday, time.Monday},
+						TimeOnly{12 * 60},
+						TimeOnly{14 * 60},
+					),
+				},
+				{
+					ID:                 CourseID(2),
+					GroupID:            GroupID(3),
+					Units:              3,
+					Capacity:           5,
+					RegisteredStudents: map[StudentID]struct{}{},
+					ReserveCapacity:    5,
+					ReserveQueue:       util.NewQueue[StudentID](),
+					ExamTime:           newAtomicTimeUnix(time.Date(2022, 9, 12, 1, 0, 0, 0, time.UTC)),
+					ClassHeldTime: NewClassTime(
+						[]time.Weekday{time.Thursday},
+						TimeOnly{13*60 + 30},
+						TimeOnly{15 * 60},
+					),
+				},
+			},
+			CourseID(3): {
+				{
+					ID:                 CourseID(3),
+					GroupID:            GroupID(1),
+					Units:              3,
+					Capacity:           5,
+					RegisteredStudents: map[StudentID]struct{}{},
+					ReserveCapacity:    5,
+					ReserveQueue:       util.NewQueue[StudentID](),
+					ExamTime:           newAtomicTimeUnix(time.Date(2022, 9, 12, 1, 0, 0, 0, time.UTC)),
+					ClassHeldTime: NewClassTime(
+						[]time.Weekday{time.Saturday},
+						TimeOnly{13*60 + 30},
+						TimeOnly{15 * 60},
+					),
+				},
+			},
+			CourseID(4): {
+				{
+					ID:                 CourseID(4),
+					GroupID:            GroupID(1),
+					Units:              3,
+					Capacity:           1,
+					RegisteredStudents: map[StudentID]struct{}{},
+					ReserveCapacity:    0,
+					ReserveQueue:       util.NewQueue[StudentID](),
+					ExamTime:           newAtomicTimeUnix(time.Date(2022, 9, 12, 1, 0, 0, 0, time.UTC)),
+					ClassHeldTime: NewClassTime(
+						[]time.Weekday{time.Saturday},
+						TimeOnly{13*60 + 30},
+						TimeOnly{15 * 60},
+					),
+				},
+				{
+					ID:                 CourseID(4),
+					GroupID:            GroupID(2),
+					Units:              3,
+					Capacity:           1,
+					RegisteredStudents: map[StudentID]struct{}{},
+					ReserveCapacity:    0,
+					ReserveQueue:       util.NewQueue[StudentID](),
+					ExamTime:           newAtomicTimeUnix(time.Date(2022, 9, 12, 1, 0, 0, 0, time.UTC)),
+					ClassHeldTime: NewClassTime(
+						[]time.Weekday{time.Saturday},
+						TimeOnly{13*60 + 30},
+						TimeOnly{15 * 60},
+					),
+				},
+			},
+		},
+	}
+	t.Run("enrollment time check", func(t *testing.T) {
+		std := Student{
+			ID: StudentID(1),
+			RegisteredCourses: map[CourseID]GroupID{
+				CourseID(1): GroupID(1),
+			},
+			RemainingActions: 10,
+		}
+		courses.courses[CourseID(1)][0].RegisteredStudents[StudentID(1)] = struct{}{}
+		clk.Set(time.Unix(10, 0))
+		std.EnrollmentStartTime.Store(time.Unix(15, 0).UnixMilli())
+		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2)), NotEnrollmentTimeErr)
+		std.EnrollmentStartTime.Store(time.Unix(5, 0).UnixMilli())
+		assert.NoError(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2)))
+		assert.Len(t, courses.courses[CourseID(1)][0].RegisteredStudents, 0)
+		assert.Len(t, courses.courses[CourseID(1)][1].RegisteredStudents, 1)
+	})
+	// We allow all other register times without setting them
+	clk.Set(time.Unix(1, 0))
+	// Remaining actions must not be zero and must be reduced each time
+	t.Run("remaining actions", func(t *testing.T) {
+		std := Student{
+			ID: StudentID(1),
+			RegisteredCourses: map[CourseID]GroupID{
+				CourseID(1): GroupID(1),
+			},
+			RemainingActions: 1,
+		}
+		courses.courses[CourseID(1)][0].RegisteredStudents = map[StudentID]struct{}{
+			StudentID(1): {},
+		}
+		assert.NoError(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2)))
+		assert.Equal(t, uint8(0), std.RemainingActions)
+		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2)), NoRemainingActionsErr)
+	})
+	// A course which user is not registered in or does not exist
+	t.Run("invalid course", func(t *testing.T) {
+		std := Student{
+			ID: StudentID(1),
+			RegisteredCourses: map[CourseID]GroupID{
+				CourseID(100): GroupID(1),
+			},
+			RemainingActions: 10,
+		}
+		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2)), NotExistsErr)
+		std.RegisteredCourses[CourseID(1)] = GroupID(1)
+		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(1), GroupID(3)), NotExistsErr)
+		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(1), GroupID(1)), PlayedYourselfErr)
+		assert.PanicsWithValue(t, "invalid registered lesson 100-1 for user 1", func() {
+			_ = std.ChangeGroup(&courses, CourseID(100), GroupID(2))
+		})
+	})
+	// Time conflict checks
+	t.Run("time conflicts", func(t *testing.T) {
+		std := Student{
+			ID: StudentID(1),
+			RegisteredCourses: map[CourseID]GroupID{
+				CourseID(2): GroupID(1),
+				CourseID(3): GroupID(1),
+			},
+			RemainingActions: 10,
+		}
+		courses.courses[CourseID(2)][0].RegisteredStudents = map[StudentID]struct{}{
+			StudentID(1): {},
+		}
+		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(2), GroupID(2)), ClassTimeConflictErr{CourseID: 3, GroupID: 1})
+		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(2), GroupID(3)), ExamConflictErr{CourseID: 3, GroupID: 1})
+	})
+	// Capacity test
+	t.Run("capacity", func(t *testing.T) {
+		std := Student{
+			ID: StudentID(1),
+			RegisteredCourses: map[CourseID]GroupID{
+				CourseID(4): GroupID(1),
+			},
+			RemainingActions: 10,
+		}
+		courses.courses[CourseID(4)][0].RegisteredStudents[StudentID(1)] = struct{}{}
+		courses.courses[CourseID(4)][1].RegisteredStudents[StudentID(2)] = struct{}{}
+		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(4), GroupID(2)), NoCapacityLeftErr)
+	})
+	// Normal test
+	t.Run("normal test", func(t *testing.T) {
+		std := Student{
+			ID: StudentID(1),
+			RegisteredCourses: map[CourseID]GroupID{
+				CourseID(1): GroupID(1),
+			},
+			RemainingActions: 1,
+		}
+		courses.courses[CourseID(1)][0].RegisteredStudents = map[StudentID]struct{}{
+			StudentID(1): {},
+		}
+		courses.courses[CourseID(1)][1].RegisteredStudents = map[StudentID]struct{}{}
+		assert.NoError(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2)))
+		assert.Len(t, courses.courses[CourseID(1)][0].RegisteredStudents, 0)
+		assert.Equal(t, map[StudentID]struct{}{
+			StudentID(1): {},
+		}, courses.courses[CourseID(1)][1].RegisteredStudents)
+		assert.Equal(t, uint8(0), std.RemainingActions)
+		assert.Equal(t, map[CourseID]GroupID{
+			CourseID(1): GroupID(1),
+		}, std.RegisteredCourses)
 	})
 }
 
