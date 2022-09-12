@@ -289,6 +289,151 @@ func TestStudentEnrollCourse(t *testing.T) {
 	})
 }
 
+func TestStudentDisenrollCourse(t *testing.T) {
+	clk := clock.NewMock()
+	studentClock = clk
+	courses := Courses{
+		courses: map[CourseID][]*Course{
+			CourseID(1): {
+				{
+					ID:                 CourseID(1),
+					GroupID:            GroupID(1),
+					Units:              1,
+					Capacity:           5,
+					RegisteredStudents: map[StudentID]struct{}{},
+					ReserveCapacity:    5,
+					ReserveQueue:       util.NewQueue[StudentID](),
+					ExamTime:           newAtomicTimeUnix(time.Date(2022, 9, 12, 1, 0, 0, 0, time.UTC)),
+					ClassHeldTime: NewClassTime(
+						[]time.Weekday{time.Wednesday},
+						TimeOnly{13 * 60},
+						TimeOnly{15 * 60},
+					),
+				},
+				{
+					ID:                 CourseID(1),
+					GroupID:            GroupID(2),
+					Units:              1,
+					Capacity:           5,
+					RegisteredStudents: map[StudentID]struct{}{},
+					ReserveCapacity:    5,
+					ReserveQueue:       util.NewQueue[StudentID](),
+					ExamTime:           newAtomicTimeUnix(time.Date(2022, 9, 12, 1, 0, 0, 0, time.UTC)),
+					ClassHeldTime: NewClassTime(
+						[]time.Weekday{time.Wednesday},
+						TimeOnly{15 * 60},
+						TimeOnly{17 * 60},
+					),
+				},
+			},
+			CourseID(2): {
+				{
+					ID:                 CourseID(2),
+					GroupID:            GroupID(1),
+					Units:              3,
+					Capacity:           5,
+					RegisteredStudents: map[StudentID]struct{}{},
+					ReserveCapacity:    5,
+					ReserveQueue:       util.NewQueue[StudentID](),
+					ExamTime:           newAtomicTimeUnix(time.Date(2022, 9, 12, 1, 0, 0, 0, time.UTC)),
+					ClassHeldTime: NewClassTime(
+						[]time.Weekday{time.Saturday},
+						TimeOnly{13*60 + 30},
+						TimeOnly{15 * 60},
+					),
+				},
+			},
+		},
+	}
+	t.Run("enrollment time check", func(t *testing.T) {
+		std := Student{
+			ID: StudentID(1),
+			RegisteredCourses: map[CourseID]GroupID{
+				CourseID(1): GroupID(1),
+			},
+			RemainingActions: 10,
+		}
+		courses.courses[CourseID(1)][0].RegisteredStudents[StudentID(1)] = struct{}{}
+		clk.Set(time.Unix(10, 0))
+		std.EnrollmentStartTime.Store(time.Unix(15, 0).UnixMilli())
+		assert.ErrorIs(t, std.DisenrollCourse(&courses, CourseID(1)), NotEnrollmentTimeErr)
+		std.EnrollmentStartTime.Store(time.Unix(5, 0).UnixMilli())
+		assert.NoError(t, std.DisenrollCourse(&courses, CourseID(1)))
+		assert.Len(t, courses.courses[CourseID(1)][0].RegisteredStudents, 0)
+	})
+	// We allow all other register times without setting them
+	clk.Set(time.Unix(1, 0))
+	// Remaining actions must not be zero and must be reduced each time
+	t.Run("remaining actions", func(t *testing.T) {
+		std := Student{
+			ID: StudentID(1),
+			RegisteredCourses: map[CourseID]GroupID{
+				CourseID(1): GroupID(1),
+				CourseID(2): GroupID(1),
+			},
+			RemainingActions: 1,
+		}
+		courses.courses[CourseID(1)][0].RegisteredStudents[StudentID(1)] = struct{}{}
+		courses.courses[CourseID(2)][0].RegisteredStudents[StudentID(1)] = struct{}{}
+		assert.NoError(t, std.DisenrollCourse(&courses, CourseID(1)))
+		assert.Equal(t, uint8(0), std.RemainingActions)
+		assert.ErrorIs(t, std.DisenrollCourse(&courses, CourseID(2)), NoRemainingActionsErr)
+	})
+	// A course which user is not registered in or does not exist
+	t.Run("invalid course", func(t *testing.T) {
+		std := Student{
+			ID: StudentID(1),
+			RegisteredCourses: map[CourseID]GroupID{
+				CourseID(100): GroupID(1),
+				CourseID(2):   GroupID(2),
+			},
+			RemainingActions: 10,
+		}
+		assert.ErrorIs(t, std.DisenrollCourse(&courses, CourseID(10)), NotExistsErr)
+		assert.PanicsWithValue(t, "invalid registered lesson 2-2", func() {
+			_ = std.DisenrollCourse(&courses, CourseID(2))
+		})
+		assert.PanicsWithValue(t, "invalid registered lesson 100-1", func() {
+			_ = std.DisenrollCourse(&courses, CourseID(100))
+		})
+	})
+	// Inconsistency of course and registered map in student struct
+	t.Run("registered inconsistency", func(t *testing.T) {
+		std := Student{
+			ID: StudentID(1),
+			RegisteredCourses: map[CourseID]GroupID{
+				CourseID(1): GroupID(1),
+			},
+			RemainingActions: 10,
+		}
+		courses.courses[CourseID(1)][0].RegisteredStudents = map[StudentID]struct{}{}
+		assert.PanicsWithValue(t, "user 1 has lesson 1-1 in their registered courses but lesson map does not have this user", func() {
+			_ = std.DisenrollCourse(&courses, CourseID(1))
+		})
+	})
+	// Just remove a student from course
+	t.Run("general test", func(t *testing.T) {
+		const addedRegisteredUnits = 2
+		const initialRemainingActions = 10
+		std := Student{
+			ID: StudentID(1),
+			RegisteredCourses: map[CourseID]GroupID{
+				CourseID(1): GroupID(1),
+			},
+			RemainingActions: initialRemainingActions,
+			RegisteredUnits:  courses.courses[CourseID(1)][0].Units + addedRegisteredUnits,
+		}
+		courses.courses[CourseID(1)][0].RegisteredStudents = map[StudentID]struct{}{
+			StudentID(1): {},
+		}
+		assert.NoError(t, std.DisenrollCourse(&courses, CourseID(1)))
+		assert.Equal(t, uint8(addedRegisteredUnits), std.RegisteredUnits)
+		assert.Equal(t, uint8(initialRemainingActions-1), std.RemainingActions)
+		assert.Len(t, std.RegisteredCourses, 0)
+		assert.Len(t, courses.courses[CourseID(1)][0].RegisteredStudents, 0)
+	})
+}
+
 //goland:noinspection GoVetCopyLock
 func newAtomicTimeUnix(t time.Time) atomic.Int64 {
 	result := atomic.Int64{}

@@ -88,17 +88,18 @@ func (c *Course) EnrollStudent(studentID StudentID) bool {
 	return false
 }
 
-// UnrollStudent will remove the student from course.
+// DisenrollStudent will remove the student from course.
 //
 // Returns true if the student was enrolled before; Otherwise false
-func (c *Course) UnrollStudent(studentID StudentID) bool {
+func (c *Course) DisenrollStudent(studentID StudentID) bool {
 	// Lock the course and unlock it when we are leaving
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	// Check registered list
 	if _, registered := c.RegisteredStudents[studentID]; registered {
 		delete(c.RegisteredStudents, studentID)
-		// Not put someone from reserve queue into registered users
+		// Now put first person from reserve queue into registered users
+		// (if exists)
 		if c.ReserveQueue.Len() != 0 {
 			c.RegisteredStudents[c.ReserveQueue.Dequeue()] = struct{}{}
 		}

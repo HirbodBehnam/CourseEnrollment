@@ -21,7 +21,7 @@ type Student struct {
 	// In unix milliseconds epoch because atomic operations.
 	EnrollmentStartTime atomic.Int64
 	// Remaining actions such as removing a course or changing group
-	RemainingActions uint16
+	RemainingActions uint8
 	// Maximum units user can pick up
 	MaxUnits uint8
 	// How many units user has registered in
@@ -92,6 +92,39 @@ func (s *Student) EnrollCourse(courses *Courses, courseID CourseID, groupID Grou
 	// We are good!
 	s.RegisteredUnits += course.Units
 	s.RegisteredCourses[courseID] = groupID
+	return nil
+}
+
+// DisenrollCourse will remove student from a course from
+func (s *Student) DisenrollCourse(courses *Courses, courseID CourseID) error {
+	// We check the start time at very first
+	if !s.IsEnrollTimeOK() {
+		return NotEnrollmentTimeErr
+	}
+	// Lock the user to do stuff with they
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	// Check the actions
+	if s.RemainingActions == 0 {
+		return NoRemainingActionsErr
+	}
+	// Get the course
+	groupID, exists := s.RegisteredCourses[courseID]
+	if !exists {
+		return NotExistsErr
+	}
+	course := courses.GetCourse(courseID, groupID)
+	if course == nil {
+		panic(fmt.Sprintf("invalid registered lesson %d-%d", courseID, groupID))
+	}
+	// Try to disenroll
+	if !course.DisenrollStudent(s.ID) {
+		panic(fmt.Sprintf("user %d has lesson %d-%d in their registered courses but lesson map does not have this user", s.ID, courseID, groupID))
+	}
+	// Remove from map
+	delete(s.RegisteredCourses, courseID)
+	s.RegisteredUnits -= course.Units
+	s.RemainingActions--
 	return nil
 }
 

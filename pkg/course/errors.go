@@ -45,3 +45,7 @@ func (e ClassTimeConflictErr) Error() string {
 
 // NoCapacityLeftErr means that we cannot register user because the capacity of course is fulled
 var NoCapacityLeftErr = errors.New("this course's capacity is filled")
+
+// NoRemainingActionsErr means that user cannot disenroll or change group because of lack of
+// remaining actions
+var NoRemainingActionsErr = errors.New("no more remaining actions left")

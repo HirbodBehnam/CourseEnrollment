@@ -49,13 +49,13 @@ func TestCourseUnrollStudent(t *testing.T) {
 		ReserveQueue:       util.NewQueue[StudentID](),
 	}
 	// At first, we just run unroll on empty course
-	assertion.False(course.UnrollStudent(StudentID(1)))
+	assertion.False(course.DisenrollStudent(StudentID(1)))
 	// Then, we add some users to registered user. We don't go to reserved capacity
 	for i := 0; i < 5; i++ {
 		assertion.True(course.EnrollStudent(StudentID(i)))
 	}
 	// Then we unroll the first student
-	assertion.True(course.UnrollStudent(StudentID(0)))
+	assertion.True(course.DisenrollStudent(StudentID(0)))
 	assertion.Len(course.RegisteredStudents, 4) // zero must be removed
 	for i := 1; i < 5; i++ {
 		_, exists := course.RegisteredStudents[StudentID(i)]
@@ -69,7 +69,7 @@ func TestCourseUnrollStudent(t *testing.T) {
 	for i := 0; i < course.ReserveCapacity; i++ {
 		assertion.True(course.EnrollStudent(StudentID(course.Capacity + i)))
 	}
-	assertion.True(course.UnrollStudent(StudentID(0))) // First reserve must go to registered list
+	assertion.True(course.DisenrollStudent(StudentID(0))) // First reserve must go to registered list
 	// Check it
 	for i := 1; i < course.Capacity+1; i++ {
 		_, exists := course.RegisteredStudents[StudentID(i)]
