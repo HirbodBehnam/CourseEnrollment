@@ -3,7 +3,7 @@ package course
 import (
 	"CourseEnrollment/pkg/util"
 	"sync"
-	"time"
+	"sync/atomic"
 )
 
 // CourseID is the type of the course's ID
@@ -38,8 +38,8 @@ type Course struct {
 	ReserveCapacity int
 	// The queue of reserved students
 	ReserveQueue util.Queue[StudentID]
-	// When is the exam of this course?
-	ExamTime time.Time
+	// When is the exam of this course? In unix epoch (seconds)
+	ExamTime atomic.Int64
 	// The time and days which class is held on
 	ClassHeldTime ClassTime
 	// Does this class has a sex lock?

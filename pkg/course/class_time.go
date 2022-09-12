@@ -24,6 +24,15 @@ type ClassTime struct {
 	data atomic.Uint32
 }
 
+// NewClassTime is basically instantiation + set
+//
+//goland:noinspection GoVetCopyLock
+func NewClassTime(days []time.Weekday, startTime, endTime TimeOnly) ClassTime {
+	result := ClassTime{}
+	result.Set(days, startTime, endTime)
+	return result
+}
+
 // Get will extract the data from ClassTime
 func (t *ClassTime) Get() (days []time.Weekday, startTime, endTime TimeOnly) {
 	raw := t.data.Load()
