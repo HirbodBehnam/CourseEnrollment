@@ -5,6 +5,7 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/stretchr/testify/assert"
 	"math"
+	"math/rand"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -824,9 +825,123 @@ func TestStudentChangeGroupLock2(t *testing.T) {
 				CourseID(1): GroupID((i + positionOffset) % numberOfGroups),
 			}, students[i].RegisteredCourses, "error on %d %d student %d",
 				numberOfRotations, numberOfSteps, students[i].ID)
-
 		}
 	}
+}
+
+func BenchmarkStudentAverage(b *testing.B) {
+	// Setup time and rng
+	clk := clock.NewMock()
+	clk.Set(time.Unix(1, 0))
+	studentClock = clk
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	// Setup courses and students
+	const numberOfStudents = 10000
+	const numberOfCourses = 2000
+	const numberOfGroups = 5
+	students := make(map[StudentID]*Student, numberOfStudents)
+	courses := Courses{courses: make(map[CourseID][]*Course, numberOfCourses)}
+	for i := 0; i < numberOfCourses; i++ {
+		courses.courses[CourseID(i)] = make([]*Course, numberOfGroups)
+		for j := 0; j < numberOfGroups; j++ {
+			courses.courses[CourseID(i)][j] = &Course{
+				ID:                 CourseID(i),
+				GroupID:            GroupID(j),
+				Units:              0, // don't account anything
+				Capacity:           5,
+				RegisteredStudents: map[StudentID]struct{}{},
+				ReserveCapacity:    5,
+				ReserveQueue:       util.NewQueue[StudentID](),
+				ExamTime:           newAtomicFromValue(int64(i*numberOfGroups + j)),
+				ClassHeldTime:      NewClassTime([]time.Weekday{time.Wednesday}, NewTimeOnly(uint16(i*numberOfGroups+j)), NewTimeOnly(uint16(i*numberOfGroups+j+1))),
+			}
+		}
+	}
+	for i := 0; i < numberOfStudents; i++ {
+		students[StudentID(i)] = &Student{
+			ID:                StudentID(i),
+			RegisteredCourses: map[CourseID]GroupID{},
+		}
+	}
+	// We benchmark like this:
+	// We choose a student then an action from 3 possible actions
+	// Then we randomly choose a course and hope for the best
+	totalActions := 0
+	successfulActions := 0
+	for i := 0; i < b.N; i++ {
+		totalActions++
+		stdNumber := StudentID(rng.Intn(numberOfStudents))
+		students[stdNumber].RemainingActions = 1
+		action := rng.Intn(10)
+		var err error
+		if action <= 7 {
+			err = students[stdNumber].EnrollCourse(&courses, CourseID(rng.Intn(numberOfCourses)), GroupID(rng.Intn(numberOfGroups)))
+		} else if action == 8 {
+			var course CourseID
+			if len(students[stdNumber].RegisteredCourses) != 0 {
+				course = randomKeyFromMap(students[stdNumber].RegisteredCourses)
+			}
+			err = students[stdNumber].ChangeGroup(&courses, course, GroupID(rng.Intn(numberOfGroups)))
+		} else {
+			var course CourseID
+			if len(students[stdNumber].RegisteredCourses) != 0 {
+				course = randomKeyFromMap(students[stdNumber].RegisteredCourses)
+			}
+			err = students[stdNumber].DisenrollCourse(&courses, course)
+		}
+		if err == nil {
+			successfulActions++
+		}
+	}
+	b.Logf("done %d actions and %d of them were ok", totalActions, successfulActions)
+}
+
+func BenchmarkStudentEnrollOnly(b *testing.B) {
+	// Setup time and rng
+	clk := clock.NewMock()
+	clk.Set(time.Unix(1, 0))
+	studentClock = clk
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	// Setup courses and students
+	const numberOfStudents = 10000
+	const numberOfCourses = 2000
+	const numberOfGroups = 5
+	students := make(map[StudentID]*Student, numberOfStudents)
+	courses := Courses{courses: make(map[CourseID][]*Course, numberOfCourses)}
+	for i := 0; i < numberOfCourses; i++ {
+		courses.courses[CourseID(i)] = make([]*Course, numberOfGroups)
+		for j := 0; j < numberOfGroups; j++ {
+			courses.courses[CourseID(i)][j] = &Course{
+				ID:                 CourseID(i),
+				GroupID:            GroupID(j),
+				Units:              0, // don't account anything
+				Capacity:           5,
+				RegisteredStudents: map[StudentID]struct{}{},
+				ReserveCapacity:    5,
+				ReserveQueue:       util.NewQueue[StudentID](),
+				ExamTime:           newAtomicFromValue(int64(i*numberOfGroups + j)),
+				ClassHeldTime:      NewClassTime([]time.Weekday{time.Wednesday}, NewTimeOnly(uint16(i*numberOfGroups+j)), NewTimeOnly(uint16(i*numberOfGroups+j+1))),
+			}
+		}
+	}
+	for i := 0; i < numberOfStudents; i++ {
+		students[StudentID(i)] = &Student{
+			ID:                StudentID(i),
+			RegisteredCourses: map[CourseID]GroupID{},
+		}
+	}
+	// Benchmark
+	totalActions := 0
+	successfulActions := 0
+	for i := 0; i < b.N; i++ {
+		totalActions++
+		stdNumber := rng.Intn(numberOfStudents)
+		err := students[StudentID(stdNumber)].EnrollCourse(&courses, CourseID(rng.Intn(numberOfCourses)), GroupID(rng.Intn(numberOfGroups)))
+		if err == nil {
+			successfulActions++
+		}
+	}
+	b.Logf("done %d actions and %d of them were ok", totalActions, successfulActions)
 }
 
 //goland:noinspection GoVetCopyLock
@@ -834,4 +949,19 @@ func newAtomicTimeUnix(t time.Time) atomic.Int64 {
 	result := atomic.Int64{}
 	result.Store(t.Unix())
 	return result
+}
+
+//goland:noinspection GoVetCopyLock
+func newAtomicFromValue(in int64) atomic.Int64 {
+	result := atomic.Int64{}
+	result.Store(in)
+	return result
+}
+
+// from the very nice https://stackoverflow.com/q/23482786/4213397
+func randomKeyFromMap[K comparable, V any](m map[K]V) K {
+	for k := range m {
+		return k
+	}
+	panic("empty map")
 }
