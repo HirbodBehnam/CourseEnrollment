@@ -1,1 +1,3 @@
 .idea
+example_data/*.json
+example_data/*.sql

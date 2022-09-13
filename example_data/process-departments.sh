@@ -1,0 +1,1 @@
+jq -r -c '.[] | "INSERT INTO departments (id, name) VALUES (\(.id), '"'"'\(.name)'"'"');"' sample-departments.json > departments.sql
