@@ -97,17 +97,17 @@ func (c *Course) threadUnsafeEnrollStudent(studentID StudentID) bool {
 
 // DisenrollStudent will remove the student from course.
 //
-// Returns true if the student was enrolled before; Otherwise false
-func (c *Course) DisenrollStudent(studentID StudentID) bool {
+// Will panic if the student is not enrolled in course.
+func (c *Course) DisenrollStudent(studentID StudentID) {
 	// Lock the course and unlock it when we are leaving
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return c.threadUnsafeDisenrollStudent(studentID)
+	c.threadUnsafeDisenrollStudent(studentID)
 }
 
 // threadUnsafeDisenrollStudent is basically DisenrollStudent but without locking
 // the course
-func (c *Course) threadUnsafeDisenrollStudent(studentID StudentID) bool {
+func (c *Course) threadUnsafeDisenrollStudent(studentID StudentID) {
 	// Check registered list
 	if _, registered := c.RegisteredStudents[studentID]; registered {
 		delete(c.RegisteredStudents, studentID)
@@ -117,10 +117,12 @@ func (c *Course) threadUnsafeDisenrollStudent(studentID StudentID) bool {
 			c.RegisteredStudents[c.ReserveQueue.Dequeue()] = struct{}{}
 		}
 		// Done
-		return true
+		return
 	}
 	// Otherwise remove from queue
-	return c.ReserveQueue.Remove(studentID)
+	if !c.ReserveQueue.Remove(studentID) {
+		panic(fmt.Sprintf("user %d has lesson %d-%d in their registered courses but lesson map does not have this user", studentID, c.ID, c.GroupID))
+	}
 }
 
 // ChangeGroupOfStudent tries to change the group of a student between two courses

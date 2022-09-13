@@ -43,19 +43,25 @@ func TestCourseEnrollStudent(t *testing.T) {
 func TestCourseUnrollStudent(t *testing.T) {
 	assertion := assert.New(t)
 	course := Course{
+		ID:                 CourseID(1),
+		GroupID:            GroupID(1),
 		Capacity:           10,
 		RegisteredStudents: make(map[StudentID]struct{}),
 		ReserveCapacity:    4,
 		ReserveQueue:       util.NewQueue[StudentID](),
 	}
 	// At first, we just run unroll on empty course
-	assertion.False(course.DisenrollStudent(StudentID(1)))
+	assertion.PanicsWithValue("user 1 has lesson 1-1 in their registered courses but lesson map does not have this user", func() {
+		course.DisenrollStudent(StudentID(1))
+	})
 	// Then, we add some users to registered user. We don't go to reserved capacity
 	for i := 0; i < 5; i++ {
 		assertion.True(course.EnrollStudent(StudentID(i)))
 	}
 	// Then we unroll the first student
-	assertion.True(course.DisenrollStudent(StudentID(0)))
+	assertion.NotPanics(func() {
+		course.DisenrollStudent(StudentID(0))
+	})
 	assertion.Len(course.RegisteredStudents, 4) // zero must be removed
 	for i := 1; i < 5; i++ {
 		_, exists := course.RegisteredStudents[StudentID(i)]
@@ -69,7 +75,9 @@ func TestCourseUnrollStudent(t *testing.T) {
 	for i := 0; i < course.ReserveCapacity; i++ {
 		assertion.True(course.EnrollStudent(StudentID(course.Capacity + i)))
 	}
-	assertion.True(course.DisenrollStudent(StudentID(0))) // First reserve must go to registered list
+	assertion.NotPanics(func() {
+		course.DisenrollStudent(StudentID(0))
+	})
 	// Check it
 	for i := 1; i < course.Capacity+1; i++ {
 		_, exists := course.RegisteredStudents[StudentID(i)]

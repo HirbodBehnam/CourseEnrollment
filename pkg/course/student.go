@@ -117,11 +117,8 @@ func (s *Student) DisenrollCourse(courses *Courses, courseID CourseID) error {
 	if course == nil {
 		panic(fmt.Sprintf("invalid registered lesson %d-%d for user %d", courseID, groupID, s.ID))
 	}
-	// Try to disenroll
-	// TODO: move panic inside DisenrollStudent
-	if !course.DisenrollStudent(s.ID) {
-		panic(fmt.Sprintf("user %d has lesson %d-%d in their registered courses but lesson map does not have this user", s.ID, courseID, groupID))
-	}
+	// Disenroll
+	course.DisenrollStudent(s.ID)
 	// Remove from map
 	delete(s.RegisteredCourses, courseID)
 	s.RegisteredUnits -= course.Units
@@ -192,6 +189,7 @@ func (s *Student) ChangeGroup(courses *Courses, courseID CourseID, destinationGr
 	}
 	// Done!
 	s.RemainingActions--
+	s.RegisteredCourses[courseID] = destinationGroupID
 	return nil
 }
 
