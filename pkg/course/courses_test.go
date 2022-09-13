@@ -92,3 +92,98 @@ func TestCourseUnrollStudent(t *testing.T) {
 		assertion.Equal(expectedReserved, course.ReserveQueue.CopyAsArray())
 	}
 }
+
+func TestCourseChangeGroupOfStudent(t *testing.T) {
+	t.Run("different course", func(t *testing.T) {
+		course1 := Course{ID: CourseID(1)}
+		course2 := Course{ID: CourseID(2)}
+		assert.PanicsWithValue(t, "different courses provided", func() {
+			course1.ChangeGroupOfStudent(StudentID(1), &course2)
+		})
+		assert.PanicsWithValue(t, "different courses provided", func() {
+			course2.ChangeGroupOfStudent(StudentID(1), &course1)
+		})
+	})
+	t.Run("same group", func(t *testing.T) {
+		course := Course{ID: CourseID(1), GroupID: GroupID(1)}
+		assert.PanicsWithValue(t, "same group provided", func() {
+			course.ChangeGroupOfStudent(StudentID(1), &course)
+		})
+		assert.PanicsWithValue(t, "same group provided", func() {
+			course.ChangeGroupOfStudent(StudentID(1), &course)
+		})
+	})
+	t.Run("invalid student", func(t *testing.T) {
+		course1 := Course{
+			ID:                 CourseID(1),
+			GroupID:            GroupID(1),
+			RegisteredStudents: map[StudentID]struct{}{},
+			ReserveQueue:       util.NewQueue[StudentID](),
+		}
+		course2 := Course{ID: CourseID(1), GroupID: GroupID(2)}
+		assert.PanicsWithValue(t, "student 1 does not exists in course 1-1", func() {
+			course1.ChangeGroupOfStudent(StudentID(1), &course2)
+		})
+	})
+	t.Run("capacity reached", func(t *testing.T) {
+		course1 := Course{
+			ID:                 CourseID(1),
+			GroupID:            GroupID(1),
+			RegisteredStudents: map[StudentID]struct{}{StudentID(1): {}},
+		}
+		course2 := Course{
+			ID:                 CourseID(1),
+			GroupID:            GroupID(2),
+			Capacity:           0,
+			RegisteredStudents: map[StudentID]struct{}{},
+			ReserveCapacity:    0,
+			ReserveQueue:       util.NewQueue[StudentID](),
+		}
+		assert.False(t, course1.ChangeGroupOfStudent(StudentID(1), &course2))
+	})
+	t.Run("normal transfer into registered", func(t *testing.T) {
+		course1 := Course{
+			ID:                 CourseID(1),
+			GroupID:            GroupID(1),
+			Capacity:           1,
+			RegisteredStudents: map[StudentID]struct{}{StudentID(1): {}},
+			ReserveCapacity:    1,
+			ReserveQueue:       util.NewQueue[StudentID](),
+		}
+		course2 := Course{
+			ID:                 CourseID(1),
+			GroupID:            GroupID(2),
+			Capacity:           1,
+			RegisteredStudents: map[StudentID]struct{}{},
+			ReserveCapacity:    0,
+			ReserveQueue:       util.NewQueue[StudentID](),
+		}
+		assert.True(t, course1.ChangeGroupOfStudent(StudentID(1), &course2))
+		assert.Len(t, course1.RegisteredStudents, 0)
+		assert.Equal(t, map[StudentID]struct{}{StudentID(1): {}}, course2.RegisteredStudents)
+	})
+	t.Run("normal transfer into queue", func(t *testing.T) {
+		course1 := Course{
+			ID:                 CourseID(1),
+			GroupID:            GroupID(1),
+			Capacity:           1,
+			RegisteredStudents: map[StudentID]struct{}{StudentID(1): {}},
+			ReserveCapacity:    1,
+			ReserveQueue:       util.NewQueue[StudentID](),
+		}
+		course1.ReserveQueue.Enqueue(StudentID(2))
+		course2 := Course{
+			ID:                 CourseID(1),
+			GroupID:            GroupID(2),
+			Capacity:           1,
+			RegisteredStudents: map[StudentID]struct{}{StudentID(3): {}},
+			ReserveCapacity:    1,
+			ReserveQueue:       util.NewQueue[StudentID](),
+		}
+		assert.True(t, course1.ChangeGroupOfStudent(StudentID(1), &course2))
+		assert.Equal(t, map[StudentID]struct{}{StudentID(2): {}}, course1.RegisteredStudents)
+		assert.Equal(t, 0, course1.ReserveQueue.Len())
+		assert.Equal(t, map[StudentID]struct{}{StudentID(3): {}}, course2.RegisteredStudents)
+		assert.Equal(t, []StudentID{1}, course2.ReserveQueue.CopyAsArray())
+	})
+}
