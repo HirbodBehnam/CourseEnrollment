@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package proto;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "CourseEnrollment/pkg/proto";
+
+// Main course enrollment server.
+// It cain enroll and disenroll and do other stuff with students and courses.
+service CourseEnrollmentServerService {
+  // This method must enroll the student
+  rpc StudentEnroll (StudentEnrollRequest) returns (google.protobuf.Empty);
+  // This method must remove the student from an enrolled course
+  rpc StudentDisenroll (StudentDisenrollRequest) returns (google.protobuf.Empty);
+  // This method must change the group of a registered user
+  rpc StudentChangeGroup (StudentChangeGroupRequest) returns (google.protobuf.Empty);
+}
+
+// The request to enroll a student in a course
+message StudentEnrollRequest {
+  uint64 student_id = 1;
+  int32 course_id = 2;
+  uint32 group_id = 3;
+}
+
+// The request to disenroll a student in a course
+message StudentDisenrollRequest {
+  uint64 student_id = 1;
+  int32 course_id = 2;
+}
+
+// The request to enroll a student in a course
+message StudentChangeGroupRequest {
+  uint64 student_id = 1;
+  int32 course_id = 2;
+  uint32 new_group_id = 3;
+}

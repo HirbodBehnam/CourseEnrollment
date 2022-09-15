@@ -2,11 +2,10 @@ package main
 
 import (
 	api "CourseEnrollment/api/CourseEnrollmentServer"
-	"context"
-	"errors"
-	"github.com/gin-gonic/gin"
+	"CourseEnrollment/pkg/proto"
+	"google.golang.org/grpc"
 	"log"
-	"net/http"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,19 +14,16 @@ import (
 func main() {
 	// TODO: connect to database and get data
 	apiData := new(api.API)
-	// Create the middleware
-	router := gin.Default()
-	studentRoutes := router.Group("/student/:stdID/:courseID")
-	studentRoutes.PUT("", apiData.StudentEnroll)
-	studentRoutes.DELETE("", apiData.StudentDisenroll)
-	studentRoutes.PATCH("", apiData.StudentChangeGroup)
-	// Listen
-	srv := &http.Server{
-		Addr:    ":8080",
-		Handler: router,
+	// Create the listener
+	listener, err := net.Listen("tcp", "localhost:8080")
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
 	}
+	var opts []grpc.ServerOption
+	grpcServer := grpc.NewServer(opts...)
+	proto.RegisterCourseEnrollmentServerServiceServer(grpcServer, apiData)
 	go func() {
-		if err := srv.ListenAndServe(); err != nil && errors.Is(err, http.ErrServerClosed) {
+		if err := grpcServer.Serve(listener); err != nil {
 			log.Fatalf("Cannot listen: %s\n", err)
 		}
 	}()
@@ -35,5 +31,5 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Println("Graceful shutdown initiated...")
-	_ = srv.Shutdown(context.Background())
+	grpcServer.GracefulStop()
 }
