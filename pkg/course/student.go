@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/benbjohnson/clock"
 	"sync"
-	"sync/atomic"
 )
 
 // studentClock is the clock which we use to check the student enrollment time
@@ -18,17 +17,15 @@ type Student struct {
 	// The id of student
 	ID StudentID
 	// When does the course enrollment start for this student?
-	// In unix milliseconds epoch because atomic operations.
-	EnrollmentStartTime atomic.Int64
+	// This value must not change... So no atomic
+	EnrollmentStartTime int64
 	// Remaining actions such as removing a course or changing group
 	RemainingActions uint8
 	// Maximum units user can pick up
 	MaxUnits uint8
 	// How many units user has registered in
 	RegisteredUnits uint8
-	// What department this user is for
-	DepartmentID DepartmentID
-	StudentSex   Sex
+	StudentSex      Sex
 	// List of courses which the student has enrolled in. The key is the course ID and the value is
 	// the group ID
 	RegisteredCourses map[CourseID]GroupID
@@ -198,6 +195,5 @@ func (s *Student) ChangeGroup(courses *Courses, courseID CourseID, destinationGr
 func (s *Student) IsEnrollTimeOK() bool {
 	const enrollmentDurationMilliseconds = 60 * 60 * 1000
 	now := studentClock.Now().UnixMilli()
-	enrollmentTime := s.EnrollmentStartTime.Load()
-	return now > enrollmentTime && now < enrollmentTime+enrollmentDurationMilliseconds
+	return now > s.EnrollmentStartTime && now < s.EnrollmentStartTime+enrollmentDurationMilliseconds
 }

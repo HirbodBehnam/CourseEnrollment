@@ -63,7 +63,7 @@ func TestStudentIsEnrollTimeOK(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			clk.Set(test.CurrentTime)
 			std := Student{}
-			std.EnrollmentStartTime.Store(test.StudentEnrollmentTime.UnixMilli())
+			std.EnrollmentStartTime = test.StudentEnrollmentTime.UnixMilli()
 			assert.Equal(t, test.ExpectedAllowed, std.IsEnrollTimeOK())
 		})
 	}
@@ -197,9 +197,9 @@ func TestStudentEnrollCourse(t *testing.T) {
 		std := Student{RegisteredCourses: map[CourseID]GroupID{}}
 		std.MaxUnits = math.MaxUint8
 		clk.Set(time.Unix(10, 0))
-		std.EnrollmentStartTime.Store(time.Unix(15, 0).UnixMilli())
+		std.EnrollmentStartTime = time.Unix(15, 0).UnixMilli()
 		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(1), GroupID(1)), NotEnrollmentTimeErr)
-		std.EnrollmentStartTime.Store(time.Unix(5, 0).UnixMilli())
+		std.EnrollmentStartTime = time.Unix(5, 0).UnixMilli()
 		assert.NoError(t, std.EnrollCourse(&courses, CourseID(1), GroupID(1)))
 	})
 	// We allow all other register times without setting them
@@ -358,9 +358,9 @@ func TestStudentDisenrollCourse(t *testing.T) {
 		}
 		courses.courses[CourseID(1)][0].RegisteredStudents[StudentID(1)] = struct{}{}
 		clk.Set(time.Unix(10, 0))
-		std.EnrollmentStartTime.Store(time.Unix(15, 0).UnixMilli())
+		std.EnrollmentStartTime = time.Unix(15, 0).UnixMilli()
 		assert.ErrorIs(t, std.DisenrollCourse(&courses, CourseID(1)), NotEnrollmentTimeErr)
-		std.EnrollmentStartTime.Store(time.Unix(5, 0).UnixMilli())
+		std.EnrollmentStartTime = time.Unix(5, 0).UnixMilli()
 		assert.NoError(t, std.DisenrollCourse(&courses, CourseID(1)))
 		assert.Len(t, courses.courses[CourseID(1)][0].RegisteredStudents, 0)
 	})
@@ -582,9 +582,9 @@ func TestStudentChangeGroup(t *testing.T) {
 		}
 		courses.courses[CourseID(1)][0].RegisteredStudents[StudentID(1)] = struct{}{}
 		clk.Set(time.Unix(10, 0))
-		std.EnrollmentStartTime.Store(time.Unix(15, 0).UnixMilli())
+		std.EnrollmentStartTime = time.Unix(15, 0).UnixMilli()
 		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2)), NotEnrollmentTimeErr)
-		std.EnrollmentStartTime.Store(time.Unix(5, 0).UnixMilli())
+		std.EnrollmentStartTime = time.Unix(5, 0).UnixMilli()
 		assert.NoError(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2)))
 		assert.Len(t, courses.courses[CourseID(1)][0].RegisteredStudents, 0)
 		assert.Len(t, courses.courses[CourseID(1)][1].RegisteredStudents, 1)

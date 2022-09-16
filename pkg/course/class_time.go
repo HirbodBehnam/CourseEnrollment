@@ -85,6 +85,16 @@ func (t *ClassTime) Intersects(other *ClassTime) bool {
 	return false
 }
 
+// Scan will scan the raw integer from database
+func (t *ClassTime) Scan(value interface{}) error {
+	raw, ok := value.(int64)
+	if !ok {
+		return databaseInvalidTypeErr
+	}
+	t.data.Store(uint32(raw))
+	return nil
+}
+
 // TimeOnly only and only holds a time between 00:00 and 24:00.
 //
 // Internal representation is basically a number between 0 and 1440 which is calculated with

@@ -27,8 +27,6 @@ type Course struct {
 	GroupID GroupID
 	// What is the department of this course?
 	Department DepartmentID
-	// Lecturer name
-	LecturerName string
 	// Number of units
 	Units uint8
 	// The total capacity of this course
@@ -47,6 +45,11 @@ type Course struct {
 	SexLock SexLock
 	// The mutex to work with this course
 	mu sync.Mutex
+}
+
+// NewCourses creates Courses from it's map
+func NewCourses(courses map[CourseID][]*Course) *Courses {
+	return &Courses{courses: courses}
 }
 
 // GetCourse will get the course based on group ID and course ID. If the course does not exist,
