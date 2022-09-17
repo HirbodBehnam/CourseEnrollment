@@ -43,7 +43,7 @@ CREATE TABLE courses
 /*
  As you can see, there is no reserved attribute here. This is because that we make sure that
  students get added in this table in order they get added in courses (in order they get enrolled).
- This is handled by TODO
+ This is handled by sending the message when the lock of the course is acquired.
  */
 CREATE TABLE enrolled_courses
 (

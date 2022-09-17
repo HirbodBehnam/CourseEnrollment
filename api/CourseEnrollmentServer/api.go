@@ -2,7 +2,6 @@ package CourseEnrollmentServer
 
 import (
 	"CourseEnrollment/pkg/course"
-	"CourseEnrollment/pkg/dbbatch"
 	"CourseEnrollment/pkg/proto"
 )
 
@@ -10,7 +9,7 @@ import (
 type API struct {
 	proto.UnimplementedCourseEnrollmentServerServiceServer
 	// Broker must handle the queries and batch them.
-	Broker dbbatch.Interface
+	Broker course.Batcher
 	// List of all students
 	Students map[course.StudentID]*course.Student
 	// List of all courses

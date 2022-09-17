@@ -198,17 +198,17 @@ func TestStudentEnrollCourse(t *testing.T) {
 		std.MaxUnits = math.MaxUint8
 		clk.Set(time.Unix(10, 0))
 		std.EnrollmentStartTime = time.Unix(15, 0).UnixMilli()
-		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(1), GroupID(1)), NotEnrollmentTimeErr)
+		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(1), GroupID(1), noOpBatcher{}), NotEnrollmentTimeErr)
 		std.EnrollmentStartTime = time.Unix(5, 0).UnixMilli()
-		assert.NoError(t, std.EnrollCourse(&courses, CourseID(1), GroupID(1)))
+		assert.NoError(t, std.EnrollCourse(&courses, CourseID(1), GroupID(1), noOpBatcher{}))
 	})
 	// We allow all other register times without setting them
 	clk.Set(time.Unix(1, 0))
 	// A non-existent course must throw an error
 	t.Run("non existent course", func(t *testing.T) {
 		std := Student{RegisteredCourses: map[CourseID]GroupID{}}
-		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(1), GroupID(10)), NotExistsErr)
-		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(100), GroupID(1)), NotExistsErr)
+		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(1), GroupID(10), noOpBatcher{}), NotExistsErr)
+		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(100), GroupID(1), noOpBatcher{}), NotExistsErr)
 	})
 	// Unlocked "sex lock" lessons are checked before. We just check the locked ones
 	t.Run("sex lock", func(t *testing.T) {
@@ -217,12 +217,12 @@ func TestStudentEnrollCourse(t *testing.T) {
 			MaxUnits:          math.MaxUint8,
 			RegisteredCourses: map[CourseID]GroupID{},
 		}
-		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(5), GroupID(1)), SexLockErr)
-		assert.NoError(t, std.EnrollCourse(&courses, CourseID(5), GroupID(2)))
+		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(5), GroupID(1), noOpBatcher{}), SexLockErr)
+		assert.NoError(t, std.EnrollCourse(&courses, CourseID(5), GroupID(2), noOpBatcher{}))
 		std.StudentSex = SexMale
 		std.RegisteredCourses = map[CourseID]GroupID{}
-		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(5), GroupID(2)), SexLockErr)
-		assert.NoError(t, std.EnrollCourse(&courses, CourseID(5), GroupID(1)))
+		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(5), GroupID(2), noOpBatcher{}), SexLockErr)
+		assert.NoError(t, std.EnrollCourse(&courses, CourseID(5), GroupID(1), noOpBatcher{}))
 	})
 	// Check max registered courses
 	t.Run("unit limit", func(t *testing.T) {
@@ -230,9 +230,9 @@ func TestStudentEnrollCourse(t *testing.T) {
 			MaxUnits:          3,
 			RegisteredCourses: map[CourseID]GroupID{},
 		}
-		assert.NoError(t, std.EnrollCourse(&courses, CourseID(2), GroupID(1)))
+		assert.NoError(t, std.EnrollCourse(&courses, CourseID(2), GroupID(1), noOpBatcher{}))
 		assert.Equal(t, uint8(3), std.RegisteredUnits)
-		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(1), GroupID(1)), UnitLimitReachedErr)
+		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(1), GroupID(1), noOpBatcher{}), UnitLimitReachedErr)
 	})
 	// Do not allow already registered courses
 	t.Run("already registered", func(t *testing.T) {
@@ -240,9 +240,9 @@ func TestStudentEnrollCourse(t *testing.T) {
 			MaxUnits:          math.MaxUint8,
 			RegisteredCourses: map[CourseID]GroupID{},
 		}
-		assert.NoError(t, std.EnrollCourse(&courses, CourseID(1), GroupID(1)))
-		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(1), GroupID(1)), AlreadyRegisteredErr)
-		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(1), GroupID(2)), AlreadyRegisteredErr)
+		assert.NoError(t, std.EnrollCourse(&courses, CourseID(1), GroupID(1), noOpBatcher{}))
+		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(1), GroupID(1), noOpBatcher{}), AlreadyRegisteredErr)
+		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(1), GroupID(2), noOpBatcher{}), AlreadyRegisteredErr)
 	})
 	// Exam times must not overlap
 	t.Run("exam time", func(t *testing.T) {
@@ -252,7 +252,7 @@ func TestStudentEnrollCourse(t *testing.T) {
 				CourseID(1): GroupID(1),
 			},
 		}
-		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(2), GroupID(1)), ExamConflictErr{CourseID(1), GroupID(1)})
+		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(2), GroupID(1), noOpBatcher{}), ExamConflictErr{CourseID(1), GroupID(1)})
 	})
 	// Class times must not overlap as well
 	t.Run("class time", func(t *testing.T) {
@@ -262,7 +262,7 @@ func TestStudentEnrollCourse(t *testing.T) {
 				CourseID(2): GroupID(1),
 			},
 		}
-		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(3), GroupID(1)), ClassTimeConflictErr{CourseID(2), GroupID(1)})
+		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(3), GroupID(1), noOpBatcher{}), ClassTimeConflictErr{CourseID(2), GroupID(1)})
 	})
 	// Must never happen. We just test for panic
 	t.Run("inconsistent state panic", func(t *testing.T) {
@@ -274,7 +274,7 @@ func TestStudentEnrollCourse(t *testing.T) {
 		}
 		assert.PanicsWithValue(t, "inconsistent user state: course 1000 group 100 is registered but not found",
 			func() {
-				_ = std.EnrollCourse(&courses, CourseID(3), GroupID(1))
+				_ = std.EnrollCourse(&courses, CourseID(3), GroupID(1), noOpBatcher{})
 			})
 	})
 	// Capacity error
@@ -288,7 +288,7 @@ func TestStudentEnrollCourse(t *testing.T) {
 			MaxUnits:          math.MaxUint8,
 			RegisteredCourses: map[CourseID]GroupID{},
 		}
-		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(1), GroupID(1)), NoCapacityLeftErr)
+		assert.ErrorIs(t, std.EnrollCourse(&courses, CourseID(1), GroupID(1), noOpBatcher{}), NoCapacityLeftErr)
 	})
 }
 
@@ -359,9 +359,9 @@ func TestStudentDisenrollCourse(t *testing.T) {
 		courses.courses[CourseID(1)][0].RegisteredStudents[StudentID(1)] = struct{}{}
 		clk.Set(time.Unix(10, 0))
 		std.EnrollmentStartTime = time.Unix(15, 0).UnixMilli()
-		assert.ErrorIs(t, std.DisenrollCourse(&courses, CourseID(1)), NotEnrollmentTimeErr)
+		assert.ErrorIs(t, std.DisenrollCourse(&courses, CourseID(1), noOpBatcher{}), NotEnrollmentTimeErr)
 		std.EnrollmentStartTime = time.Unix(5, 0).UnixMilli()
-		assert.NoError(t, std.DisenrollCourse(&courses, CourseID(1)))
+		assert.NoError(t, std.DisenrollCourse(&courses, CourseID(1), noOpBatcher{}))
 		assert.Len(t, courses.courses[CourseID(1)][0].RegisteredStudents, 0)
 	})
 	// We allow all other register times without setting them
@@ -378,9 +378,9 @@ func TestStudentDisenrollCourse(t *testing.T) {
 		}
 		courses.courses[CourseID(1)][0].RegisteredStudents[StudentID(1)] = struct{}{}
 		courses.courses[CourseID(2)][0].RegisteredStudents[StudentID(1)] = struct{}{}
-		assert.NoError(t, std.DisenrollCourse(&courses, CourseID(1)))
+		assert.NoError(t, std.DisenrollCourse(&courses, CourseID(1), noOpBatcher{}))
 		assert.Equal(t, uint8(0), std.RemainingActions)
-		assert.ErrorIs(t, std.DisenrollCourse(&courses, CourseID(2)), NoRemainingActionsErr)
+		assert.ErrorIs(t, std.DisenrollCourse(&courses, CourseID(2), noOpBatcher{}), NoRemainingActionsErr)
 	})
 	// A course which user is not registered in or does not exist
 	t.Run("invalid course", func(t *testing.T) {
@@ -392,12 +392,12 @@ func TestStudentDisenrollCourse(t *testing.T) {
 			},
 			RemainingActions: 10,
 		}
-		assert.ErrorIs(t, std.DisenrollCourse(&courses, CourseID(10)), NotExistsErr)
+		assert.ErrorIs(t, std.DisenrollCourse(&courses, CourseID(10), noOpBatcher{}), NotExistsErr)
 		assert.PanicsWithValue(t, "invalid registered lesson 2-2 for user 1", func() {
-			_ = std.DisenrollCourse(&courses, CourseID(2))
+			_ = std.DisenrollCourse(&courses, CourseID(2), noOpBatcher{})
 		})
 		assert.PanicsWithValue(t, "invalid registered lesson 100-1 for user 1", func() {
-			_ = std.DisenrollCourse(&courses, CourseID(100))
+			_ = std.DisenrollCourse(&courses, CourseID(100), noOpBatcher{})
 		})
 	})
 	// Inconsistency of course and registered map in student struct
@@ -411,7 +411,7 @@ func TestStudentDisenrollCourse(t *testing.T) {
 		}
 		courses.courses[CourseID(1)][0].RegisteredStudents = map[StudentID]struct{}{}
 		assert.PanicsWithValue(t, "user 1 has lesson 1-1 in their registered courses but lesson map does not have this user", func() {
-			_ = std.DisenrollCourse(&courses, CourseID(1))
+			_ = std.DisenrollCourse(&courses, CourseID(1), noOpBatcher{})
 		})
 	})
 	// Just remove a student from course
@@ -429,7 +429,7 @@ func TestStudentDisenrollCourse(t *testing.T) {
 		courses.courses[CourseID(1)][0].RegisteredStudents = map[StudentID]struct{}{
 			StudentID(1): {},
 		}
-		assert.NoError(t, std.DisenrollCourse(&courses, CourseID(1)))
+		assert.NoError(t, std.DisenrollCourse(&courses, CourseID(1), noOpBatcher{}))
 		assert.Equal(t, uint8(addedRegisteredUnits), std.RegisteredUnits)
 		assert.Equal(t, uint8(initialRemainingActions-1), std.RemainingActions)
 		assert.Len(t, std.RegisteredCourses, 0)
@@ -583,9 +583,9 @@ func TestStudentChangeGroup(t *testing.T) {
 		courses.courses[CourseID(1)][0].RegisteredStudents[StudentID(1)] = struct{}{}
 		clk.Set(time.Unix(10, 0))
 		std.EnrollmentStartTime = time.Unix(15, 0).UnixMilli()
-		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2)), NotEnrollmentTimeErr)
+		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2), noOpBatcher{}), NotEnrollmentTimeErr)
 		std.EnrollmentStartTime = time.Unix(5, 0).UnixMilli()
-		assert.NoError(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2)))
+		assert.NoError(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2), noOpBatcher{}))
 		assert.Len(t, courses.courses[CourseID(1)][0].RegisteredStudents, 0)
 		assert.Len(t, courses.courses[CourseID(1)][1].RegisteredStudents, 1)
 	})
@@ -603,9 +603,9 @@ func TestStudentChangeGroup(t *testing.T) {
 		courses.courses[CourseID(1)][0].RegisteredStudents = map[StudentID]struct{}{
 			StudentID(1): {},
 		}
-		assert.NoError(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2)))
+		assert.NoError(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2), noOpBatcher{}))
 		assert.Equal(t, uint8(0), std.RemainingActions)
-		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2)), NoRemainingActionsErr)
+		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2), noOpBatcher{}), NoRemainingActionsErr)
 	})
 	// A course which user is not registered in or does not exist
 	t.Run("invalid course", func(t *testing.T) {
@@ -616,12 +616,12 @@ func TestStudentChangeGroup(t *testing.T) {
 			},
 			RemainingActions: 10,
 		}
-		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2)), NotExistsErr)
+		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2), noOpBatcher{}), NotExistsErr)
 		std.RegisteredCourses[CourseID(1)] = GroupID(1)
-		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(1), GroupID(3)), NotExistsErr)
-		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(1), GroupID(1)), PlayedYourselfErr)
+		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(1), GroupID(3), noOpBatcher{}), NotExistsErr)
+		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(1), GroupID(1), noOpBatcher{}), PlayedYourselfErr)
 		assert.PanicsWithValue(t, "invalid registered lesson 100-1 for user 1", func() {
-			_ = std.ChangeGroup(&courses, CourseID(100), GroupID(2))
+			_ = std.ChangeGroup(&courses, CourseID(100), GroupID(2), noOpBatcher{})
 		})
 	})
 	// Time conflict checks
@@ -637,8 +637,8 @@ func TestStudentChangeGroup(t *testing.T) {
 		courses.courses[CourseID(2)][0].RegisteredStudents = map[StudentID]struct{}{
 			StudentID(1): {},
 		}
-		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(2), GroupID(2)), ClassTimeConflictErr{CourseID: 3, GroupID: 1})
-		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(2), GroupID(3)), ExamConflictErr{CourseID: 3, GroupID: 1})
+		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(2), GroupID(2), noOpBatcher{}), ClassTimeConflictErr{CourseID: 3, GroupID: 1})
+		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(2), GroupID(3), noOpBatcher{}), ExamConflictErr{CourseID: 3, GroupID: 1})
 	})
 	// Capacity test
 	t.Run("capacity", func(t *testing.T) {
@@ -651,7 +651,7 @@ func TestStudentChangeGroup(t *testing.T) {
 		}
 		courses.courses[CourseID(4)][0].RegisteredStudents[StudentID(1)] = struct{}{}
 		courses.courses[CourseID(4)][1].RegisteredStudents[StudentID(2)] = struct{}{}
-		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(4), GroupID(2)), NoCapacityLeftErr)
+		assert.ErrorIs(t, std.ChangeGroup(&courses, CourseID(4), GroupID(2), noOpBatcher{}), NoCapacityLeftErr)
 	})
 	// Normal test
 	t.Run("normal test", func(t *testing.T) {
@@ -666,7 +666,7 @@ func TestStudentChangeGroup(t *testing.T) {
 			StudentID(1): {},
 		}
 		courses.courses[CourseID(1)][1].RegisteredStudents = map[StudentID]struct{}{}
-		assert.NoError(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2)))
+		assert.NoError(t, std.ChangeGroup(&courses, CourseID(1), GroupID(2), noOpBatcher{}))
 		assert.Len(t, courses.courses[CourseID(1)][0].RegisteredStudents, 0)
 		assert.Equal(t, map[StudentID]struct{}{
 			StudentID(1): {},
@@ -717,7 +717,7 @@ func TestStudentChangeGroupLock1(t *testing.T) {
 					for i := 0; i < numberOfRotations; i++ {
 						nextGroupID := (int(students[index].RegisteredCourses[CourseID(1)]) + numberOfSteps) % numberOfGroups
 						for {
-							err := students[index].ChangeGroup(&courses, CourseID(1), GroupID(nextGroupID))
+							err := students[index].ChangeGroup(&courses, CourseID(1), GroupID(nextGroupID), noOpBatcher{})
 							// If there is no capacity, we just try again
 							if err == NoCapacityLeftErr {
 								runtime.Gosched() // Let other threads do stuff
@@ -798,7 +798,7 @@ func TestStudentChangeGroupLock2(t *testing.T) {
 					}
 					nextGroupID := (int(students[index].RegisteredCourses[CourseID(1)]) + numberOfSteps) % numberOfGroups
 					for {
-						err := students[index].ChangeGroup(&courses, CourseID(1), GroupID(nextGroupID))
+						err := students[index].ChangeGroup(&courses, CourseID(1), GroupID(nextGroupID), noOpBatcher{})
 						// If there is no capacity, we just try again
 						if err == NoCapacityLeftErr {
 							runtime.Gosched() // Let other threads do stuff
@@ -875,19 +875,19 @@ func BenchmarkStudentAverage(b *testing.B) {
 		action := rng.Intn(10)
 		var err error
 		if action <= 7 {
-			err = students[stdNumber].EnrollCourse(&courses, CourseID(rng.Intn(numberOfCourses)), GroupID(rng.Intn(numberOfGroups)))
+			err = students[stdNumber].EnrollCourse(&courses, CourseID(rng.Intn(numberOfCourses)), GroupID(rng.Intn(numberOfGroups)), noOpBatcher{})
 		} else if action == 8 {
 			var course CourseID
 			if len(students[stdNumber].RegisteredCourses) != 0 {
 				course = randomKeyFromMap(students[stdNumber].RegisteredCourses)
 			}
-			err = students[stdNumber].ChangeGroup(&courses, course, GroupID(rng.Intn(numberOfGroups)))
+			err = students[stdNumber].ChangeGroup(&courses, course, GroupID(rng.Intn(numberOfGroups)), noOpBatcher{})
 		} else {
 			var course CourseID
 			if len(students[stdNumber].RegisteredCourses) != 0 {
 				course = randomKeyFromMap(students[stdNumber].RegisteredCourses)
 			}
-			err = students[stdNumber].DisenrollCourse(&courses, course)
+			err = students[stdNumber].DisenrollCourse(&courses, course, noOpBatcher{})
 		}
 		if err == nil {
 			successfulActions++
@@ -936,7 +936,7 @@ func BenchmarkStudentEnrollOnly(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		totalActions++
 		stdNumber := rng.Intn(numberOfStudents)
-		err := students[StudentID(stdNumber)].EnrollCourse(&courses, CourseID(rng.Intn(numberOfCourses)), GroupID(rng.Intn(numberOfGroups)))
+		err := students[StudentID(stdNumber)].EnrollCourse(&courses, CourseID(rng.Intn(numberOfCourses)), GroupID(rng.Intn(numberOfGroups)), noOpBatcher{})
 		if err == nil {
 			successfulActions++
 		}

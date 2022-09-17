@@ -35,7 +35,7 @@ type Student struct {
 
 // EnrollCourse tries to enroll the student in a course.
 // It does all the checks and then enrolls the student if possible.
-func (s *Student) EnrollCourse(courses *Courses, courseID CourseID, groupID GroupID) error {
+func (s *Student) EnrollCourse(courses *Courses, courseID CourseID, groupID GroupID, batcher Batcher) error {
 	// We check the start time at very first
 	if !s.IsEnrollTimeOK() {
 		return NotEnrollmentTimeErr
@@ -83,7 +83,11 @@ func (s *Student) EnrollCourse(courses *Courses, courseID CourseID, groupID Grou
 		}
 	}
 	// At last, we register the course
-	if !course.EnrollStudent(s.ID) {
+	registered, err := course.EnrollStudent(s.ID, batcher)
+	if err != nil {
+		return err
+	}
+	if !registered {
 		return NoCapacityLeftErr
 	}
 	// We are good!
@@ -93,7 +97,7 @@ func (s *Student) EnrollCourse(courses *Courses, courseID CourseID, groupID Grou
 }
 
 // DisenrollCourse will remove student from a course from
-func (s *Student) DisenrollCourse(courses *Courses, courseID CourseID) error {
+func (s *Student) DisenrollCourse(courses *Courses, courseID CourseID, batcher Batcher) error {
 	// We check the start time at very first
 	if !s.IsEnrollTimeOK() {
 		return NotEnrollmentTimeErr
@@ -115,7 +119,10 @@ func (s *Student) DisenrollCourse(courses *Courses, courseID CourseID) error {
 		panic(fmt.Sprintf("invalid registered lesson %d-%d for user %d", courseID, groupID, s.ID))
 	}
 	// Disenroll
-	course.DisenrollStudent(s.ID)
+	err := course.DisenrollStudent(s.ID, batcher)
+	if err != nil {
+		return err
+	}
 	// Remove from map
 	delete(s.RegisteredCourses, courseID)
 	s.RegisteredUnits -= course.Units
@@ -124,7 +131,7 @@ func (s *Student) DisenrollCourse(courses *Courses, courseID CourseID) error {
 }
 
 // ChangeGroup will atomically change group of a user in a course
-func (s *Student) ChangeGroup(courses *Courses, courseID CourseID, destinationGroupID GroupID) error {
+func (s *Student) ChangeGroup(courses *Courses, courseID CourseID, destinationGroupID GroupID, batcher Batcher) error {
 	// We check the start time at very first
 	if !s.IsEnrollTimeOK() {
 		return NotEnrollmentTimeErr
@@ -181,7 +188,11 @@ func (s *Student) ChangeGroup(courses *Courses, courseID CourseID, destinationGr
 		}
 	}
 	// Change the group
-	if !sourceCourse.ChangeGroupOfStudent(s.ID, destinationCourse) {
+	changed, err := sourceCourse.ChangeGroupOfStudent(s.ID, destinationCourse, batcher)
+	if err != nil {
+		return err
+	}
+	if !changed {
 		return NoCapacityLeftErr
 	}
 	// Done!

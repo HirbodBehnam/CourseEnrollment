@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "CourseEnrollment/pkg/proto";
+
+enum CourseDatabaseBatchAction {
+  Enroll = 0;
+  Disenroll = 1;
+  ChangeGroup = 2;
+}
+
+message CourseDatabaseBatchMessage {
+  // The action which is preformed in this message
+  CourseDatabaseBatchAction action = 1;
+  // The student ID which this message is for
+  uint64 student_id = 2;
+  // The course which user is trying to enroll or disenroll or change group in.
+  int32 course_id = 3;
+  // The group ID which user is trying to enroll or change group TO.
+  uint32 group_id = 4;
+}

@@ -2,7 +2,6 @@ package CourseEnrollmentServer
 
 import (
 	"CourseEnrollment/pkg/course"
-	"CourseEnrollment/pkg/dbbatch"
 	"CourseEnrollment/pkg/proto"
 	"context"
 	"google.golang.org/grpc/codes"
@@ -23,21 +22,10 @@ func (api *API) StudentEnroll(_ context.Context, r *proto.StudentEnrollRequest) 
 		return
 	}
 	// Enroll
-	err = std.EnrollCourse(api.Courses, course.CourseID(r.CourseId), course.GroupID(r.GroupId))
+	err = std.EnrollCourse(api.Courses, course.CourseID(r.CourseId), course.GroupID(r.GroupId), api.Broker)
 	if err != nil {
 		err = status.Error(codes.FailedPrecondition, err.Error())
 		return
-	}
-	// Send to message broker for database
-	err = api.Broker.UpdateDatabase(dbbatch.Message{
-		Type:     dbbatch.MessageActionTypeEnroll,
-		StdID:    std.ID,
-		CourseID: course.CourseID(r.CourseId),
-		GroupID:  course.GroupID(r.GroupId),
-	})
-	if err != nil {
-		// FUCK
-		// TODO
 	}
 	// Done
 	return resp, nil
@@ -53,20 +41,10 @@ func (api *API) StudentDisenroll(_ context.Context, r *proto.StudentDisenrollReq
 		return
 	}
 	// Disenroll
-	err = std.DisenrollCourse(api.Courses, course.CourseID(r.CourseId))
+	err = std.DisenrollCourse(api.Courses, course.CourseID(r.CourseId), api.Broker)
 	if err != nil {
 		err = status.Error(codes.FailedPrecondition, err.Error())
 		return
-	}
-	// Send to message broker for database
-	err = api.Broker.UpdateDatabase(dbbatch.Message{
-		Type:     dbbatch.MessageActionTypeDisenroll,
-		StdID:    std.ID,
-		CourseID: course.CourseID(r.CourseId),
-	})
-	if err != nil {
-		// FUCK
-		// TODO
 	}
 	// Done
 	return resp, err
@@ -82,21 +60,10 @@ func (api *API) StudentChangeGroup(_ context.Context, r *proto.StudentChangeGrou
 		return
 	}
 	// Change group
-	err = std.ChangeGroup(api.Courses, course.CourseID(r.CourseId), course.GroupID(r.NewGroupId))
+	err = std.ChangeGroup(api.Courses, course.CourseID(r.CourseId), course.GroupID(r.NewGroupId), api.Broker)
 	if err != nil {
 		err = status.Error(codes.FailedPrecondition, err.Error())
 		return
-	}
-	// Send to message broker for database
-	err = api.Broker.UpdateDatabase(dbbatch.Message{
-		Type:     dbbatch.MessageActionTypeChangeGroup,
-		StdID:    std.ID,
-		CourseID: course.CourseID(r.CourseId),
-		GroupID:  course.GroupID(r.NewGroupId),
-	})
-	if err != nil {
-		// FUCK
-		// TODO
 	}
 	// Done
 	return resp, nil
