@@ -97,59 +97,141 @@ func TestCourseEnrollStudent(t *testing.T) {
 		assertion.ErrorIs(err, BatchError{innerError})
 		assertion.Len(course.RegisteredStudents, 0)
 	})
+	t.Run("nil batcher", func(t *testing.T) {
+		assert.PanicsWithValue(t, "nil batcher", func() {
+			_, _ = new(Course).EnrollStudent(StudentID(1), nil)
+		})
+	})
 }
 
 func TestCourseUnrollStudent(t *testing.T) {
-	assertion := assert.New(t)
-	course := Course{
-		ID:                 CourseID(1),
-		GroupID:            GroupID(1),
-		Capacity:           10,
-		RegisteredStudents: make(map[StudentID]struct{}),
-		ReserveCapacity:    4,
-		ReserveQueue:       util.NewQueue[StudentID](),
-	}
-	// At first, we just run unroll on empty course
-	assertion.PanicsWithValue("user 1 has lesson 1-1 in their registered courses but lesson map does not have this user", func() {
-		_ = course.DisenrollStudent(StudentID(1), noOpBatcher{})
-	})
-	// Then, we add some users to registered user. We don't go to reserved capacity
-	for i := 0; i < 5; i++ {
-		assertion.True(course.EnrollStudent(StudentID(i), noOpBatcher{}))
-	}
-	// Then we unroll the first student
-	assertion.NotPanics(func() {
-		_ = course.DisenrollStudent(StudentID(0), noOpBatcher{})
-	})
-	assertion.Len(course.RegisteredStudents, 4) // zero must be removed
-	for i := 1; i < 5; i++ {
-		_, exists := course.RegisteredStudents[StudentID(i)]
-		assertion.True(exists)
-	}
-	// Then we add them again
-	course.RegisteredStudents = make(map[StudentID]struct{})
-	for i := 0; i < course.Capacity; i++ {
-		assertion.True(course.EnrollStudent(StudentID(i), noOpBatcher{}))
-	}
-	for i := 0; i < course.ReserveCapacity; i++ {
-		assertion.True(course.EnrollStudent(StudentID(course.Capacity+i), noOpBatcher{}))
-	}
-	assertion.NotPanics(func() {
-		_ = course.DisenrollStudent(StudentID(0), noOpBatcher{})
-	})
-	// Check it
-	for i := 1; i < course.Capacity+1; i++ {
-		_, exists := course.RegisteredStudents[StudentID(i)]
-		assertion.True(exists)
-	}
-	// Check reserved
-	{
-		expectedReserved := make([]StudentID, 0, course.ReserveCapacity)
-		for i := 1; i < course.ReserveCapacity; i++ {
-			expectedReserved = append(expectedReserved, StudentID(course.Capacity+i))
+	t.Run("general test", func(t *testing.T) {
+		assertion := assert.New(t)
+		course := Course{
+			ID:                 CourseID(1),
+			GroupID:            GroupID(1),
+			Capacity:           10,
+			RegisteredStudents: make(map[StudentID]struct{}),
+			ReserveCapacity:    4,
+			ReserveQueue:       util.NewQueue[StudentID](),
 		}
-		assertion.Equal(expectedReserved, course.ReserveQueue.CopyAsArray())
-	}
+		// At first, we just run unroll on empty course
+		assertion.PanicsWithValue("user 1 has lesson 1-1 in their registered courses but lesson map does not have this user", func() {
+			_ = course.DisenrollStudent(StudentID(1), noOpBatcher{})
+		})
+		// Then, we add some users to registered user. We don't go to reserved capacity
+		for i := 0; i < 5; i++ {
+			assertion.True(course.EnrollStudent(StudentID(i), noOpBatcher{}))
+		}
+		// Then we unroll the first student
+		assertion.NotPanics(func() {
+			_ = course.DisenrollStudent(StudentID(0), noOpBatcher{})
+		})
+		assertion.Len(course.RegisteredStudents, 4) // zero must be removed
+		for i := 1; i < 5; i++ {
+			_, exists := course.RegisteredStudents[StudentID(i)]
+			assertion.True(exists)
+		}
+		// Then we add them again
+		course.RegisteredStudents = make(map[StudentID]struct{})
+		for i := 0; i < course.Capacity; i++ {
+			assertion.True(course.EnrollStudent(StudentID(i), noOpBatcher{}))
+		}
+		for i := 0; i < course.ReserveCapacity; i++ {
+			assertion.True(course.EnrollStudent(StudentID(course.Capacity+i), noOpBatcher{}))
+		}
+		assertion.NotPanics(func() {
+			_ = course.DisenrollStudent(StudentID(0), noOpBatcher{})
+		})
+		// Check it
+		for i := 1; i < course.Capacity+1; i++ {
+			_, exists := course.RegisteredStudents[StudentID(i)]
+			assertion.True(exists)
+		}
+		// Check reserved
+		{
+			expectedReserved := make([]StudentID, 0, course.ReserveCapacity)
+			for i := 1; i < course.ReserveCapacity; i++ {
+				expectedReserved = append(expectedReserved, StudentID(course.Capacity+i))
+			}
+			assertion.Equal(expectedReserved, course.ReserveQueue.CopyAsArray())
+		}
+	})
+	t.Run("batcher test", func(t *testing.T) {
+		assertion := assert.New(t)
+		course := Course{
+			ID:         CourseID(1),
+			GroupID:    GroupID(1),
+			Department: DepartmentID(4),
+			Capacity:   2,
+			RegisteredStudents: map[StudentID]struct{}{
+				StudentID(1): {},
+				StudentID(2): {},
+			},
+			ReserveCapacity: 2,
+			ReserveQueue:    util.NewQueue[StudentID](),
+		}
+		course.ReserveQueue.Enqueue(StudentID(3))
+		course.ReserveQueue.Enqueue(StudentID(4))
+		// Check if data is queued correctly in message broker
+		broker := new(inMemoryBatcher)
+		assertion.NoError(course.DisenrollStudent(StudentID(2), broker))
+		assertion.NoError(course.DisenrollStudent(StudentID(1), broker))
+		assertion.Equal([]struct {
+			data *proto.CourseDatabaseBatchMessage
+			dep  DepartmentID
+		}{
+			{
+				data: &proto.CourseDatabaseBatchMessage{
+					Action:    proto.CourseDatabaseBatchAction_Disenroll,
+					StudentId: uint64(2),
+					CourseId:  1,
+					GroupId:   1,
+				},
+				dep: DepartmentID(4),
+			},
+			{
+				data: &proto.CourseDatabaseBatchMessage{
+					Action:    proto.CourseDatabaseBatchAction_Disenroll,
+					StudentId: uint64(1),
+					CourseId:  1,
+					GroupId:   1,
+				},
+				dep: DepartmentID(4),
+			}}, broker.messages)
+		assertion.Equal(map[StudentID]struct{}{
+			StudentID(3): {},
+			StudentID(4): {},
+		}, course.RegisteredStudents)
+	})
+	t.Run("error batcher", func(t *testing.T) {
+		course := Course{
+			ID:         CourseID(1),
+			GroupID:    GroupID(1),
+			Department: DepartmentID(4),
+			Capacity:   2,
+			RegisteredStudents: map[StudentID]struct{}{
+				StudentID(1): {},
+				StudentID(2): {},
+			},
+			ReserveCapacity: 2,
+			ReserveQueue:    util.NewQueue[StudentID](),
+		}
+		course.ReserveQueue.Enqueue(StudentID(3))
+		course.ReserveQueue.Enqueue(StudentID(4))
+		// Check the data if broker returns error
+		innerError := errors.New("my error")
+		assert.ErrorIs(t, course.DisenrollStudent(StudentID(1), errorBatcher{innerError}), BatchError{innerError})
+		assert.Equal(t, map[StudentID]struct{}{
+			StudentID(1): {},
+			StudentID(2): {},
+		}, course.RegisteredStudents)
+	})
+	t.Run("nil batcher", func(t *testing.T) {
+		assert.PanicsWithValue(t, "nil batcher", func() {
+			_ = new(Course).DisenrollStudent(StudentID(1), nil)
+		})
+	})
 }
 
 func TestCourseChangeGroupOfStudent(t *testing.T) {
@@ -250,5 +332,50 @@ func TestCourseChangeGroupOfStudent(t *testing.T) {
 		assert.Equal(t, 0, course1.ReserveQueue.Len())
 		assert.Equal(t, map[StudentID]struct{}{StudentID(3): {}}, course2.RegisteredStudents)
 		assert.Equal(t, []StudentID{1}, course2.ReserveQueue.CopyAsArray())
+	})
+	t.Run("batch test", func(t *testing.T) {
+		course1 := Course{
+			Department:         DepartmentID(4),
+			ID:                 CourseID(1),
+			GroupID:            GroupID(1),
+			Capacity:           1,
+			RegisteredStudents: map[StudentID]struct{}{StudentID(1): {}},
+			ReserveCapacity:    1,
+			ReserveQueue:       util.NewQueue[StudentID](),
+		}
+		course1.ReserveQueue.Enqueue(StudentID(2))
+		course2 := Course{
+			Department:         DepartmentID(4),
+			ID:                 CourseID(1),
+			GroupID:            GroupID(2),
+			Capacity:           1,
+			RegisteredStudents: map[StudentID]struct{}{StudentID(3): {}},
+			ReserveCapacity:    1,
+			ReserveQueue:       util.NewQueue[StudentID](),
+		}
+		broker := new(inMemoryBatcher)
+		// No error test
+		res, err := course1.ChangeGroupOfStudent(StudentID(1), &course2, broker)
+		assert.NoError(t, err)
+		assert.True(t, res)
+		// Capacity full test
+		res, err = course1.ChangeGroupOfStudent(StudentID(2), &course2, broker)
+		assert.NoError(t, err)
+		assert.False(t, res)
+		// Test
+		assert.Equal(t, []struct {
+			data *proto.CourseDatabaseBatchMessage
+			dep  DepartmentID
+		}{
+			{
+				data: &proto.CourseDatabaseBatchMessage{
+					Action:    proto.CourseDatabaseBatchAction_ChangeGroup,
+					StudentId: uint64(1),
+					CourseId:  1,
+					GroupId:   2,
+				},
+				dep: DepartmentID(4),
+			},
+		}, broker.messages)
 	})
 }

@@ -76,6 +76,9 @@ func (c *Courses) GetCourse(courseID CourseID, groupID GroupID) *Course {
 // it returns false.
 // It also does not check if the student is enrolled in this course or not
 func (c *Course) EnrollStudent(studentID StudentID, batcher Batcher) (bool, error) {
+	if batcher == nil {
+		panic("nil batcher")
+	}
 	// Lock the course and unlock it when we are leaving
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -119,6 +122,9 @@ func (c *Course) threadUnsafeEnrollStudent(studentID StudentID, batcher Batcher)
 //
 // Will panic if the student is not enrolled in course.
 func (c *Course) DisenrollStudent(studentID StudentID, batcher Batcher) error {
+	if batcher == nil {
+		panic("nil batcher")
+	}
 	// Lock the course and unlock it when we are leaving
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -160,6 +166,9 @@ func (c *Course) threadUnsafeDisenrollStudent(studentID StudentID, batcher Batch
 
 // ChangeGroupOfStudent tries to change the group of a student between two courses
 func (c *Course) ChangeGroupOfStudent(studentID StudentID, other *Course, batcher Batcher) (bool, error) {
+	if batcher == nil {
+		panic("nil batcher")
+	}
 	// Check courses
 	if c.ID != other.ID {
 		panic("different courses provided")

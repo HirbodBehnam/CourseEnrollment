@@ -76,7 +76,7 @@ func (db *Database) GetCourses() (*course.Courses, error) {
 
 // updateCourseRegistered updates the registered users in the
 func (db *Database) updateCourseRegistered(c *course.Course) error {
-	rows, err := db.db.Query(context.Background(), "SELECT student_id FROM enrolled_courses WHERE course_id=? AND group_id=? ORDER BY id")
+	rows, err := db.db.Query(context.Background(), "SELECT student_id FROM enrolled_courses WHERE course_id=$1 AND group_id=$2 ORDER BY id", c.ID, c.GroupID)
 	if err != nil {
 		return errors.Wrapf(err, "cannot query course %d-%d", c.ID, c.GroupID)
 	}
@@ -129,7 +129,7 @@ func (db *Database) GetStudents() (map[course.StudentID]*course.Student, error) 
 // getEnrolledCoursesOfStudent gets the list of enrolled (reserved and registered) of a user
 // and the number of courses
 func (db *Database) getEnrolledCoursesOfStudent(stdID course.StudentID) (map[course.CourseID]course.GroupID, uint8, error) {
-	rows, err := db.db.Query(context.Background(), "SELECT enrolled_courses.course_id, enrolled_courses.group_id, c.units FROM enrolled_courses JOIN courses c on c.course_id = enrolled_courses.course_id and c.group_id = enrolled_courses.group_id WHERE student_id=?", stdID)
+	rows, err := db.db.Query(context.Background(), "SELECT enrolled_courses.course_id, enrolled_courses.group_id, c.units FROM enrolled_courses JOIN courses c on c.course_id = enrolled_courses.course_id and c.group_id = enrolled_courses.group_id WHERE student_id=$1", stdID)
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "cannot query")
 	}
