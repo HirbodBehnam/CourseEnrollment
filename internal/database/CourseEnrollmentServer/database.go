@@ -123,7 +123,7 @@ func (db *Database) GetStudents() (map[course.StudentID]*course.Student, error) 
 		// Add to map
 		result[student.ID] = student
 	}
-	return nil, nil
+	return result, nil
 }
 
 // getEnrolledCoursesOfStudent gets the list of enrolled (reserved and registered) of a user
