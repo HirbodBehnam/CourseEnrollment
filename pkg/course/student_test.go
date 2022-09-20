@@ -13,7 +13,52 @@ import (
 	"time"
 )
 
-func TestStudentIsEnrollTimeOK(t *testing.T) {
+func TestExamTimesIntersect(t *testing.T) {
+	tests := []struct {
+		Name           string
+		A              int64
+		B              int64
+		ExpectedResult bool
+	}{
+		{
+			Name:           "not equal",
+			A:              1,
+			B:              2,
+			ExpectedResult: false,
+		},
+		{
+			Name:           "equal",
+			A:              2,
+			B:              2,
+			ExpectedResult: true,
+		},
+		{
+			Name:           "zero",
+			A:              0,
+			B:              2,
+			ExpectedResult: false,
+		},
+		{
+			Name:           "zero",
+			A:              2,
+			B:              0,
+			ExpectedResult: false,
+		},
+		{
+			Name:           "both zero",
+			A:              0,
+			B:              0,
+			ExpectedResult: false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			assert.Equal(t, test.ExpectedResult, examTimesIntersect(test.A, test.B))
+		})
+	}
+}
+
+func TestStudentIsEnrollTime(t *testing.T) {
 	clk := clock.NewMock()
 	studentClock = clk
 	tests := []struct {

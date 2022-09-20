@@ -4,18 +4,19 @@ import (
 	"CourseEnrollment/pkg/course"
 	"CourseEnrollment/pkg/util"
 	"context"
-	"github.com/jackc/pgx/v4"
+	"database/sql"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
 	"time"
 )
 
 type Database struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
 // NewDatabase creates a database for accessing the database
 // which is just used in loading the courses for server startup
-func NewDatabase(db *pgx.Conn) Database {
+func NewDatabase(db *pgxpool.Pool) Database {
 	return Database{db}
 }
 
@@ -53,8 +54,8 @@ func (db *Database) GetCourses() (*course.Courses, error) {
 	for rows.Next() {
 		// Create the course
 		currentCourse := new(course.Course)
-		var examTime time.Time
-		err = rows.Scan(&currentCourse.ID, &currentCourse.GroupID, &currentCourse.Department, &currentCourse.Units, &currentCourse.Capacity, &currentCourse.ReserveCapacity, &currentCourse,
+		var examTime sql.NullTime
+		err = rows.Scan(&currentCourse.ID, &currentCourse.GroupID, &currentCourse.Department, &currentCourse.Units, &currentCourse.Capacity, &currentCourse.ReserveCapacity,
 			&examTime, &currentCourse.ClassHeldTime, &currentCourse.SexLock)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot scan course")
@@ -62,7 +63,7 @@ func (db *Database) GetCourses() (*course.Courses, error) {
 		// Update some missing info based on scanned ones
 		currentCourse.ReserveQueue = util.NewQueue[course.StudentID]()
 		currentCourse.RegisteredStudents = make(map[course.StudentID]struct{}, currentCourse.Capacity)
-		currentCourse.ExamTime.Store(examTime.Unix())
+		currentCourse.ExamTime.Store(examTime.Time.Unix())
 		// Get the courses registered list
 		err = db.updateCourseRegistered(currentCourse)
 		if err != nil {

@@ -39,6 +39,7 @@ type Course struct {
 	// The queue of reserved students
 	ReserveQueue util.Queue[StudentID]
 	// When is the exam of this course? In unix epoch (seconds)
+	// If this value is zero, it means that there is no exam for this course
 	ExamTime atomic.Int64
 	// The time and days which class is held on
 	ClassHeldTime ClassTime

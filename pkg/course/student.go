@@ -68,7 +68,7 @@ func (s *Student) EnrollCourse(courses *Courses, courseID CourseID, groupID Grou
 			panic(fmt.Sprintf("inconsistent user state: course %d group %d is registered but not found", registeredCourseID, registeredGroupID))
 		}
 		// Check exam time
-		if registeredCourse.ExamTime.Load() == course.ExamTime.Load() {
+		if examTimesIntersect(registeredCourse.ExamTime.Load(), course.ExamTime.Load()) {
 			return ExamConflictErr{
 				CourseID: registeredCourse.ID,
 				GroupID:  registeredCourse.GroupID,
@@ -173,7 +173,7 @@ func (s *Student) ChangeGroup(courses *Courses, courseID CourseID, destinationGr
 			panic(fmt.Sprintf("inconsistent user state: course %d group %d is registered but not found", registeredCourseID, registeredGroupID))
 		}
 		// Check exam time
-		if registeredCourse.ExamTime.Load() == destinationCourse.ExamTime.Load() {
+		if examTimesIntersect(registeredCourse.ExamTime.Load(), destinationCourse.ExamTime.Load()) {
 			return ExamConflictErr{
 				CourseID: registeredCourse.ID,
 				GroupID:  registeredCourse.GroupID,
@@ -207,4 +207,14 @@ func (s *Student) IsEnrollTimeOK() bool {
 	const enrollmentDurationMilliseconds = 60 * 60 * 1000
 	now := studentClock.Now().UnixMilli()
 	return now > s.EnrollmentStartTime && now < s.EnrollmentStartTime+enrollmentDurationMilliseconds
+}
+
+// examTimesIntersect checks if two exam times intersect.
+// As a side note that why this is a separate function, 0 as time means no exam.
+func examTimesIntersect(a, b int64) bool {
+	// If at least one of them doesn't have exam, it's fine
+	if a == 0 || b == 0 {
+		return false
+	}
+	return a == b
 }

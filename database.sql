@@ -9,7 +9,7 @@ CREATE TABLE students
 (
     id                    INTEGER PRIMARY KEY NOT NULL,
     password              TEXT                NOT NULL,
-    enrollment_start_time TIMESTAMP           NOT NULL,
+    enrollment_start_time TIMESTAMPTZ         NOT NULL,
     max_units             SMALLINT            NOT NULL,
     remaining_actions     SMALLINT            NOT NULL,
     department_id         SMALLSERIAL         NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE courses
     units            SMALLINT    NOT NULL,
     capacity         INTEGER     NOT NULL,
     reserve_capacity INTEGER     NOT NULL,
-    exam_time        TIMESTAMP   NOT NULL,
+    exam_time        TIMESTAMPTZ,
     class_time       INTEGER     NOT NULL,
     sex_lock         sex,
     notes            TEXT        NOT NULL,
