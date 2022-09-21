@@ -4,11 +4,11 @@ import "CourseEnrollment/pkg/proto"
 
 // Batcher must send the request in a queue to be processed later
 type Batcher interface {
-	// Process must send it into queue
-	Process(DepartmentID, *proto.CourseDatabaseBatchMessage) error
+	// ProcessDatabaseQuery must send it into queue
+	ProcessDatabaseQuery(DepartmentID, *proto.CourseDatabaseBatchMessage) error
 }
 
-// BatchError is an error which Batcher.Process can return
+// BatchError is an error which Batcher.ProcessDatabaseQuery can return
 type BatchError struct {
 	err error
 }

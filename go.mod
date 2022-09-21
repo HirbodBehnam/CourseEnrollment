@@ -4,8 +4,10 @@ go 1.19
 
 require (
 	github.com/benbjohnson/clock v1.3.0
+	github.com/golang/protobuf v1.5.2
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/pkg/errors v0.8.1
+	github.com/rabbitmq/amqp091-go v1.5.0
 	github.com/stretchr/testify v1.8.0
 	google.golang.org/grpc v1.49.0
 	google.golang.org/protobuf v1.28.1
@@ -13,7 +15,6 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.13.0 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
