@@ -95,7 +95,7 @@ func (c *Course) threadUnsafeEnrollStudent(studentID StudentID, batcher Batcher)
 	}
 	if batcher != nil {
 		// We queue the message in batcher and hope that it'll
-		err := batcher.Process(c.Department, &proto.CourseDatabaseBatchMessage{
+		err := batcher.ProcessDatabaseQuery(c.Department, &proto.CourseDatabaseBatchMessage{
 			Action:    proto.CourseDatabaseBatchAction_Enroll,
 			StudentId: uint64(studentID),
 			CourseId:  int32(c.ID),
@@ -137,7 +137,7 @@ func (c *Course) DisenrollStudent(studentID StudentID, batcher Batcher) error {
 func (c *Course) threadUnsafeDisenrollStudent(studentID StudentID, batcher Batcher) error {
 	if batcher != nil {
 		// Put data in batcher
-		err := batcher.Process(c.Department, &proto.CourseDatabaseBatchMessage{
+		err := batcher.ProcessDatabaseQuery(c.Department, &proto.CourseDatabaseBatchMessage{
 			Action:    proto.CourseDatabaseBatchAction_Disenroll,
 			StudentId: uint64(studentID),
 			CourseId:  int32(c.ID),
@@ -199,7 +199,7 @@ func (c *Course) ChangeGroupOfStudent(studentID StudentID, other *Course, batche
 		return false, nil
 	}
 	// Send data in batcher
-	err := batcher.Process(c.Department, &proto.CourseDatabaseBatchMessage{
+	err := batcher.ProcessDatabaseQuery(c.Department, &proto.CourseDatabaseBatchMessage{
 		Action:    proto.CourseDatabaseBatchAction_ChangeGroup,
 		StudentId: uint64(studentID),
 		CourseId:  int32(c.ID),
