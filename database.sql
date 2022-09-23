@@ -5,6 +5,13 @@ DROP TYPE IF EXISTS sex;
 -- Create sex type
 CREATE TYPE sex AS ENUM ('male', 'female');
 
+CREATE TABLE staff
+(
+    id            INTEGER PRIMARY KEY NOT NULL,
+    password      TEXT                NOT NULL,
+    department_id SMALLSERIAL         NOT NULL
+);
+
 CREATE TABLE students
 (
     id                    INTEGER PRIMARY KEY NOT NULL,
@@ -53,8 +60,10 @@ CREATE TABLE enrolled_courses
     student_id INTEGER            NOT NULL
 );
 
+ALTER TABLE staff
+    ADD CONSTRAINT staff_department_id_department_id FOREIGN KEY (department_id) REFERENCES departments (id);
 ALTER TABLE students
-    ADD CONSTRAINT users_department_id_department_id FOREIGN KEY (department_id) REFERENCES departments (id);
+    ADD CONSTRAINT students_department_id_department_id FOREIGN KEY (department_id) REFERENCES departments (id);
 ALTER TABLE courses
     ADD CONSTRAINT courses_for_department_department_id FOREIGN KEY (for_department) REFERENCES departments (id);
 ALTER TABLE enrolled_courses
