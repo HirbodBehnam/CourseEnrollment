@@ -13,3 +13,6 @@ const jwtTTL = time.Minute * 5
 
 // jwtIssuer which is "course enrollment auth"
 const jwtIssuer = "cea"
+
+// authInfoKey is the key name which is in gin.Context keys map
+const authInfoKey = "auth"

@@ -19,6 +19,12 @@ type JWTToken struct {
 	IsStaff    bool                `json:"staff"`
 }
 
+type AuthData struct {
+	User       uint64
+	Department course.DepartmentID
+	IsStaff    bool
+}
+
 // TokenResult contains a JWT token only
 type TokenResult struct {
 	Token string `json:"token" binding:"required"`

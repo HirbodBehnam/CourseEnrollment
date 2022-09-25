@@ -24,6 +24,7 @@ func main() {
 	r := gin.Default()
 	// Login and logout
 	r.POST("/login", endpointApi.LoginUser)
+	r.POST("/refresh", endpointApi.JWTAuthMiddleware(), endpointApi.RefreshJWTToken)
 	// Listen
 	srv := &http.Server{
 		Addr:    os.Getenv("LISTEN_ADDRESS"),

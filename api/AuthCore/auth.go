@@ -2,11 +2,8 @@ package AuthCore
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
 	log "github.com/sirupsen/logrus"
 	"net/http"
-	"strconv"
-	"time"
 )
 
 // LoginUser must check the authentication credentials of user and login it
@@ -30,18 +27,22 @@ func (a *API) LoginUser(c *gin.Context) {
 		return
 	}
 	// Create the JWT
-	now := time.Now()
-	token, err := jwt.NewWithClaims(signingMethod, JWTToken{
-		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    jwtIssuer,
-			Subject:   strconv.FormatUint(request.User, 10),
-			ExpiresAt: jwt.NewNumericDate(now.Add(jwtTTL)),
-			NotBefore: jwt.NewNumericDate(now),
-			IssuedAt:  jwt.NewNumericDate(now),
-		},
-		Department: departmentID,
-		IsStaff:    request.IsStaff,
-	}).SignedString(a.jwtKey)
+	token, err := createJWTToken(a.jwtKey, request.User, departmentID, request.IsStaff)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		log.WithError(err).Error("cannot sign the jwt")
+		return
+	}
+	// Send back the result
+	c.JSON(http.StatusOK, TokenResult{token})
+}
+
+// RefreshJWTToken refreshes the JWT token of a user
+func (a *API) RefreshJWTToken(c *gin.Context) {
+	// Get auth data
+	auth := c.MustGet(authInfoKey).(AuthData)
+	// Sign again
+	token, err := createJWTToken(a.jwtKey, auth.User, auth.Department, auth.IsStaff)
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		log.WithError(err).Error("cannot sign the jwt")
