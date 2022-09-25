@@ -8,8 +8,8 @@ import (
 	"CourseEnrollment/pkg/broker"
 	"CourseEnrollment/pkg/course"
 	"CourseEnrollment/pkg/proto"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -55,6 +55,7 @@ func getInitialData() (course.Departments, *course.Courses, map[course.StudentID
 	if err != nil {
 		log.Fatalf("cannot connect to database: %s\n", err)
 	}
+	defer db.Close()
 	pgDB := database.NewDatabase(db)
 	// Fetch data
 	departments, err := pgDB.GetDepartments()
