@@ -17,7 +17,8 @@ type Student struct {
 	// The id of student
 	ID StudentID
 	// When does the course enrollment start for this student?
-	// This value must not change... So no atomic
+	// This value must not change... So no atomic.
+	// This is in unix milliseconds.
 	EnrollmentStartTime int64
 	// Remaining actions such as removing a course or changing group
 	RemainingActions uint8

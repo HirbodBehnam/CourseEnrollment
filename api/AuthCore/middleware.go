@@ -49,8 +49,6 @@ func (a *API) JWTAuthMiddleware() gin.HandlerFunc {
 		}
 		// Set in map
 		c.Set(authInfoKey, authData)
-		// Continue
-		c.Next()
 	}
 }
 
@@ -62,6 +60,17 @@ func StudentOnly() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{reasonKey: "students only!"})
 			return
 		}
-		c.Next()
+	}
+}
+
+// ParseEnrollmentBody will parse the body of a request into CourseEnrollmentRequest
+func ParseEnrollmentBody() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var request CourseEnrollmentRequest
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{reasonKey: err.Error()})
+			return
+		}
+		c.Set(requestKey, request)
 	}
 }

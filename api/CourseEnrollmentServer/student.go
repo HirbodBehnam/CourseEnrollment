@@ -4,6 +4,7 @@ import (
 	"CourseEnrollment/pkg/course"
 	"CourseEnrollment/pkg/proto"
 	"context"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -24,7 +25,12 @@ func (api *API) StudentEnroll(_ context.Context, r *proto.StudentEnrollRequest) 
 	// Enroll
 	err = std.EnrollCourse(api.Courses, course.CourseID(r.CourseId), course.GroupID(r.GroupId), api.Broker)
 	if err != nil {
-		err = status.Error(codes.FailedPrecondition, err.Error())
+		if batchError, ok := err.(course.BatchError); ok {
+			err = status.Error(codes.Internal, "")
+			log.WithError(batchError).Error("cannot batch data")
+		} else {
+			err = status.Error(codes.FailedPrecondition, err.Error())
+		}
 		return
 	}
 	// Done
@@ -43,8 +49,12 @@ func (api *API) StudentDisenroll(_ context.Context, r *proto.StudentDisenrollReq
 	// Disenroll
 	err = std.DisenrollCourse(api.Courses, course.CourseID(r.CourseId), api.Broker)
 	if err != nil {
-		err = status.Error(codes.FailedPrecondition, err.Error())
-		return
+		if batchError, ok := err.(course.BatchError); ok {
+			err = status.Error(codes.Internal, "")
+			log.WithError(batchError).Error("cannot batch data")
+		} else {
+			err = status.Error(codes.FailedPrecondition, err.Error())
+		}
 	}
 	// Done
 	return resp, err
@@ -62,8 +72,12 @@ func (api *API) StudentChangeGroup(_ context.Context, r *proto.StudentChangeGrou
 	// Change group
 	err = std.ChangeGroup(api.Courses, course.CourseID(r.CourseId), course.GroupID(r.NewGroupId), api.Broker)
 	if err != nil {
-		err = status.Error(codes.FailedPrecondition, err.Error())
-		return
+		if batchError, ok := err.(course.BatchError); ok {
+			err = status.Error(codes.Internal, "")
+			log.WithError(batchError).Error("cannot batch data")
+		} else {
+			err = status.Error(codes.FailedPrecondition, err.Error())
+		}
 	}
 	// Done
 	return resp, nil

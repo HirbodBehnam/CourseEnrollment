@@ -34,7 +34,9 @@ func main() {
 	r.POST("/refresh", endpointApi.JWTAuthMiddleware(), endpointApi.RefreshJWTToken)
 	// Student endpoints
 	studentRouter := r.Group("/student", endpointApi.JWTAuthMiddleware(), api.StudentOnly())
-	studentRouter.PUT("/course", endpointApi.EnrollStudent)
+	studentRouter.PUT("/course", api.ParseEnrollmentBody(), endpointApi.EnrollStudent)
+	studentRouter.PATCH("/course", api.ParseEnrollmentBody(), endpointApi.ChangeGroupOfStudent)
+	studentRouter.DELETE("/course", endpointApi.DisenrollStudent)
 	// Listen
 	srv := &http.Server{
 		Addr:    os.Getenv("LISTEN_ADDRESS"),

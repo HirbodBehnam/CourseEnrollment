@@ -19,3 +19,6 @@ const authInfoKey = "auth"
 
 // reasonKey is the key in JSON result which specifies the error
 const reasonKey = "reason"
+
+// requestKey is the key which maps to request data
+const requestKey = "request-data"

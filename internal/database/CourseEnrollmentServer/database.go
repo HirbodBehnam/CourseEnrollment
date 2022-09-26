@@ -121,6 +121,7 @@ func (db *Database) GetStudents() (map[course.StudentID]*course.Student, error) 
 		if err != nil {
 			return nil, errors.Wrapf(err, "cannot get student registered courses for %d", student.ID)
 		}
+		student.EnrollmentStartTime = enrollmentStartTime.UnixMilli()
 		// Add to map
 		result[student.ID] = student
 	}
