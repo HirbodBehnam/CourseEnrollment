@@ -12,11 +12,11 @@ const (
 
 // Scan will scan the sex enum from database
 func (s *Sex) Scan(value interface{}) error {
-	data, ok := value.([]byte)
+	data, ok := value.(string)
 	if !ok {
 		return databaseInvalidTypeErr
 	}
-	switch string(data) {
+	switch data {
 	case "male":
 		*s = SexMale
 	case "female":

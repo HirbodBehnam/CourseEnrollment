@@ -2,6 +2,7 @@ package AuthCore
 
 import (
 	db "CourseEnrollment/internal/database/AuthCore"
+	pb "CourseEnrollment/pkg/proto"
 	"crypto/rand"
 )
 
@@ -11,6 +12,8 @@ type API struct {
 	Database db.Database
 	// The key to sign stuff with it
 	jwtKey []byte
+	// The gRPC client for connection to main core
+	CoreClient pb.CourseEnrollmentServerServiceClient
 }
 
 // GenerateJWTKey generates a random JWT key

@@ -11,7 +11,7 @@ func (a *API) LoginUser(c *gin.Context) {
 	// Get username and password
 	var request LoginRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{reasonKey: err.Error()})
 		return
 	}
 	// Check them

@@ -17,7 +17,7 @@ func (a *API) JWTAuthMiddleware() gin.HandlerFunc {
 		const prefix = "Bearer "
 		header := c.Request.Header.Get(headerName)
 		if !strings.HasPrefix(header, prefix) {
-			c.JSON(http.StatusUnauthorized, gin.H{"reason": "empty auth"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{reasonKey: "empty auth"})
 			return
 		}
 		header = header[len(prefix):]
@@ -29,12 +29,12 @@ func (a *API) JWTAuthMiddleware() gin.HandlerFunc {
 			return a.jwtKey, nil
 		})
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"reason": "invalid auth"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{reasonKey: "invalid auth"})
 			return
 		}
 		claims, ok := token.Claims.(*JWTToken)
 		if !ok || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"reason": "invalid auth"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{reasonKey: "invalid auth"})
 			return
 		}
 		// Set the data
@@ -44,12 +44,24 @@ func (a *API) JWTAuthMiddleware() gin.HandlerFunc {
 		}
 		authData.User, err = strconv.ParseUint(claims.Subject, 10, 64)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"reason": "invalid auth"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{reasonKey: "invalid auth"})
 			return
 		}
 		// Set in map
 		c.Set(authInfoKey, authData)
 		// Continue
+		c.Next()
+	}
+}
+
+// StudentOnly will only allow students to access this endpoint.
+// It must be called after JWTAuthMiddleware
+func StudentOnly() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.MustGet(authInfoKey).(AuthData).IsStaff {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{reasonKey: "students only!"})
+			return
+		}
 		c.Next()
 	}
 }

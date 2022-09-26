@@ -19,6 +19,8 @@ type JWTToken struct {
 	IsStaff    bool                `json:"staff"`
 }
 
+// AuthData is the struct which is passed to endpoints and contains the
+// JWT authorization info
 type AuthData struct {
 	User       uint64
 	Department course.DepartmentID
@@ -28,4 +30,14 @@ type AuthData struct {
 // TokenResult contains a JWT token only
 type TokenResult struct {
 	Token string `json:"token" binding:"required"`
+}
+
+// CourseEnrollmentRequest is the data which must be sent to us when
+// a student wants to do anything with their courses.
+type CourseEnrollmentRequest struct {
+	CourseID course.CourseID `json:"course_id" binding:"required"`
+	// On enrollment this is the group which user wants to enroll in.
+	// On disenrollment this is empty. (It's ignored)
+	// On change group this is the destination group ID.
+	GroupID course.GroupID `json:"group_id"`
 }

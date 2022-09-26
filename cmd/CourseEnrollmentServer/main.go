@@ -25,16 +25,16 @@ func main() {
 	apiData.Broker, closeBroker = setupMessageBroker()
 	defer closeBroker()
 	// Create the listener
-	listener, err := net.Listen("tcp", "localhost:8080")
+	listener, err := net.Listen("tcp", os.Getenv("LISTEN_ADDRESS"))
 	if err != nil {
-		log.Fatalf("failed to listen: %s\n", err)
+		log.Fatalf("failed to listen: %s", err)
 	}
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
 	proto.RegisterCourseEnrollmentServerServiceServer(grpcServer, apiData)
 	go func() {
 		if err := grpcServer.Serve(listener); err != nil {
-			log.Fatalf("Cannot listen: %s\n", err)
+			log.Fatalf("Cannot listen: %s", err)
 		}
 	}()
 	quit := make(chan os.Signal, 1)
@@ -53,22 +53,22 @@ func getInitialData() (course.Departments, *course.Courses, map[course.StudentID
 	// Get the database url and connect to it
 	db, err := pg.NewPostgresDatabase(dbURL)
 	if err != nil {
-		log.Fatalf("cannot connect to database: %s\n", err)
+		log.Fatalf("cannot connect to database: %s", err)
 	}
 	defer db.Close()
 	pgDB := database.NewDatabase(db)
 	// Fetch data
 	departments, err := pgDB.GetDepartments()
 	if err != nil {
-		log.Fatalf("cannot get departments: %s\n", err)
+		log.Fatalf("cannot get departments: %s", err)
 	}
 	courses, err := pgDB.GetCourses()
 	if err != nil {
-		log.Fatalf("cannot get courses: %s\n", err)
+		log.Fatalf("cannot get courses: %s", err)
 	}
 	students, err := pgDB.GetStudents()
 	if err != nil {
-		log.Fatalf("cannot get students: %s\n", err)
+		log.Fatalf("cannot get students: %s", err)
 	}
 	// Done
 	return departments, courses, students
@@ -84,7 +84,7 @@ func setupMessageBroker() (course.Batcher, func()) {
 	}
 	mq, err := broker.NewRabbitMQBroker(address, shared.CourseEnrollmentServerDatabaseQueueName)
 	if err != nil {
-		log.Fatalf("cannot instantiate the RabbitMQ client: %s\n", err)
+		log.Fatalf("cannot instantiate the RabbitMQ client: %s", err)
 	}
 	return mq, func() {
 		_ = mq.Close()

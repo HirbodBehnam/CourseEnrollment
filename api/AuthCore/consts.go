@@ -16,3 +16,6 @@ const jwtIssuer = "cea"
 
 // authInfoKey is the key name which is in gin.Context keys map
 const authInfoKey = "auth"
+
+// reasonKey is the key in JSON result which specifies the error
+const reasonKey = "reason"
