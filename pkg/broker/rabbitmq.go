@@ -4,8 +4,8 @@ import (
 	"CourseEnrollment/pkg/course"
 	"CourseEnrollment/pkg/proto"
 	"context"
+	"github.com/go-faster/errors"
 	protobuf "github.com/golang/protobuf/proto"
-	"github.com/pkg/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 

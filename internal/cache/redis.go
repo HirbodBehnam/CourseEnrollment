@@ -2,8 +2,8 @@ package cache
 
 import (
 	"context"
+	"github.com/go-faster/errors"
 	"github.com/go-redis/redis/v8"
-	"github.com/pkg/errors"
 )
 
 // NewRedisClient creates a new Redis client and tests it by pinging it

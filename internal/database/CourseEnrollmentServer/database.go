@@ -5,8 +5,8 @@ import (
 	"CourseEnrollment/pkg/util"
 	"context"
 	"database/sql"
+	"github.com/go-faster/errors"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/pkg/errors"
 	"time"
 )
 

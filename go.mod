@@ -5,11 +5,11 @@ go 1.19
 require (
 	github.com/benbjohnson/clock v1.3.0
 	github.com/gin-gonic/gin v1.8.1
+	github.com/go-faster/errors v0.6.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/golang/protobuf v1.5.2
 	github.com/jackc/pgx/v4 v4.17.2
-	github.com/pkg/errors v0.8.1
 	github.com/rabbitmq/amqp091-go v1.5.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.0
