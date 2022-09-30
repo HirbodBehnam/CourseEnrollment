@@ -7,6 +7,7 @@ import (
 	"github.com/go-faster/errors"
 	protobuf "github.com/golang/protobuf/proto"
 	amqp "github.com/rabbitmq/amqp091-go"
+	log "github.com/sirupsen/logrus"
 )
 
 // RabbitMQBroker instantiates a RabbitMQ broker for general use
@@ -65,4 +66,47 @@ func (c RabbitMQBroker) ProcessDatabaseQuery(_ course.DepartmentID, msg *proto.C
 		amqp.Publishing{
 			Body: data,
 		})
+}
+
+// Consume will consume the messages which are received on
+func (c RabbitMQBroker) Consume(consumer string) (<-chan *proto.CourseDatabaseBatchMessage, error) {
+	// Create the consumer
+	messages, err := c.channel.Consume(
+		c.queue.Name,
+		consumer,
+		true,
+		true,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+	// Create the channel to send the parsed proto buffer messages in it
+	messageChannel := make(chan *proto.CourseDatabaseBatchMessage)
+	// Loop over messages and send them in another goroutine
+	go receiveMessages(messages, messageChannel)
+	return messageChannel, nil
+}
+
+// CancelConsumer will cancel a consumer by it's name
+func (c RabbitMQBroker) CancelConsumer(consumer string) error {
+	return c.channel.Cancel(consumer, false)
+}
+
+// receiveMessages will receive messages from a channel and parses them as proto.CourseDatabaseBatchMessage
+func receiveMessages(incoming <-chan amqp.Delivery, outgoing chan<- *proto.CourseDatabaseBatchMessage) {
+	for message := range incoming {
+		parsedMessage := new(proto.CourseDatabaseBatchMessage)
+		err := protobuf.Unmarshal(message.Body, parsedMessage)
+		if err != nil {
+			log.WithError(err).Warn("cannot parse proto buffer message")
+			continue
+		}
+		// Send to channel
+		outgoing <- parsedMessage
+	}
+	// When incoming channel is closed, also close the outgoing channel
+	close(outgoing)
 }

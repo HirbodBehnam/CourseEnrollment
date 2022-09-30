@@ -80,7 +80,7 @@ func getInitialData() (course.Departments, *course.Courses, map[course.StudentID
 func setupMessageBroker() (course.Batcher, func()) {
 	address := os.Getenv("RABBITMQ_ADDRESS")
 	if address == "" {
-		log.Fatalln("please set RABBITMQ_ADDRESS environment variable")
+		log.Fatal("please set RABBITMQ_ADDRESS environment variable")
 	}
 	mq, err := broker.NewRabbitMQBroker(address, shared.CourseEnrollmentServerDatabaseQueueName)
 	if err != nil {

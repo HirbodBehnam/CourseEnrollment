@@ -2,12 +2,12 @@ import json
 import jdatetime
 
 # Load json
-f = open('courses.json')
+f = open('courses.json', 'r', encoding="utf-8")
 data = json.load(f)['message']
 f.close()
 
 # Check each course
-f = open('courses.sql', 'w')
+f = open('courses.sql', 'w', encoding="utf-8")
 for course in data:
 	courseID = course['number']
 	groupID = course['group']
@@ -34,7 +34,7 @@ for course in data:
 		try:
 			examTime = "'" + jdatetime.datetime.strptime(course['examDate'], "%Y/%m/%d %H:%M").togregorian().strftime("%Y/%m/%d %H:%M:%S") + "'"
 		except:
-			pass
+		    print("invalid exam time at:", course['id'])
 	
 	f.write(f"INSERT INTO courses (course_id, group_id, for_department, name, lecturer, units, capacity, reserve_capacity, exam_time, class_time, sex_lock, notes) VALUES ({courseID}, {groupID}, {department}, '{title}', '{lecturer}', {units}, {capacity}, {reserve}, {examTime}, {classTime}, {sex_lock}, '{notes}');\n")
 	

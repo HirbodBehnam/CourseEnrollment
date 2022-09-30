@@ -37,6 +37,8 @@ func main() {
 	studentRouter.PUT("/course", api.ParseEnrollmentBody(), endpointApi.EnrollStudent)
 	studentRouter.PATCH("/course", api.ParseEnrollmentBody(), endpointApi.ChangeGroupOfStudent)
 	studentRouter.DELETE("/course", endpointApi.DisenrollStudent)
+	// Admin endpoints
+	// TODO
 	// Listen
 	srv := &http.Server{
 		Addr:    os.Getenv("LISTEN_ADDRESS"),
