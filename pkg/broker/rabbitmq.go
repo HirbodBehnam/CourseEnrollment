@@ -90,7 +90,7 @@ func (c RabbitMQBroker) Consume(consumer string) (<-chan *proto.CourseDatabaseBa
 	return messageChannel, nil
 }
 
-// CancelConsumer will cancel a consumer by it's name
+// CancelConsumer will cancel a consumer by its name
 func (c RabbitMQBroker) CancelConsumer(consumer string) error {
 	return c.channel.Cancel(consumer, false)
 }

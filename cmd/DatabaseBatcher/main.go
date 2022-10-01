@@ -30,7 +30,7 @@ func main() {
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		<-quit
-		log.Println("Shutting down server...")
+		log.Println("Shutting down...")
 		err := mqBroker.CancelConsumer(consumerName)
 		if err != nil {
 			log.WithError(err).Warn("cannot cancel consumer")
