@@ -3,6 +3,7 @@ syntax = "proto3";
 package proto;
 
 import "google/protobuf/empty.proto";
+import "pkg/proto/time.proto";
 
 option go_package = "CourseEnrollment/pkg/proto";
 
@@ -15,6 +16,10 @@ service CourseEnrollmentServerService {
   rpc StudentDisenroll (StudentDisenrollRequest) returns (google.protobuf.Empty);
   // This method must change the group of a registered user
   rpc StudentChangeGroup (StudentChangeGroupRequest) returns (google.protobuf.Empty);
+  // This method must send the registered courses of a user
+  rpc GetStudentEnrolledCourses (GetStudentCoursesRequest) returns (StudentCourseDataArray);
+  // This method will get all courses in a department
+  rpc GetCoursesOfDepartment (GetDepartmentCoursesRequest) returns (DepartmentCourses);
 }
 
 // The request to enroll a student in a course
@@ -35,4 +40,46 @@ message StudentChangeGroupRequest {
   uint64 student_id = 1;
   int32 course_id = 2;
   uint32 new_group_id = 3;
+}
+
+// This is the request to get a student courses.
+// It only contains the student ID
+message GetStudentCoursesRequest {
+  uint64 student_id = 1;
+}
+
+// Request data to get all courses in a department.
+// This message only contains a department id.
+message GetDepartmentCoursesRequest {
+  uint32 department_id = 1;
+}
+
+// Course data is the general info about a course
+message CourseData {
+  int32 course_id = 1;
+  uint32 group_id = 2;
+  uint32 units = 3;
+  int32 capacity = 4;
+  uint32 registered_count = 5;
+  int64 exam_time = 6; // in unix epoch
+  repeated ClassTime class_time = 7;
+  string lecturer = 8;
+}
+
+// StudentCourseData contains the course + if user is
+message StudentCourseData {
+  CourseData course = 1;
+  // Zero on this field means that this user is registered.
+  // Zeroth place on queue is out of it right?
+  uint32 reserve_queue_position = 2;
+}
+
+// StudentCourseDataArray is an array of StudentCourseData
+message StudentCourseDataArray {
+  repeated StudentCourseData data = 1;
+}
+
+// DepartmentCourses is an array of courses
+message DepartmentCourses {
+  repeated CourseData courses = 1;
 }

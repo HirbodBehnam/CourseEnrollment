@@ -28,6 +28,8 @@ type Course struct {
 	GroupID GroupID
 	// What is the department of this course?
 	Department DepartmentID
+	// Who lectures this course? TODO
+	Lecturer string
 	// Number of units
 	Units uint8
 	// The total capacity of this course
@@ -46,10 +48,10 @@ type Course struct {
 	// Does this class has a sex lock?
 	SexLock SexLock
 	// The mutex to work with this course
-	mu sync.Mutex
+	mu sync.RWMutex
 }
 
-// NewCourses creates Courses from it's map
+// NewCourses creates Courses from its map
 func NewCourses(courses map[CourseID][]*Course) *Courses {
 	return &Courses{courses: courses}
 }
@@ -221,4 +223,52 @@ func (c *Course) ChangeGroupOfStudent(studentID StudentID, other *Course, batche
 // It doesn't lock anything, so it's thread unsafe.
 func (c *Course) threadUnsafeCanBeEnrolled() bool {
 	return len(c.RegisteredStudents) < c.Capacity || c.ReserveQueue.Len() < c.ReserveCapacity
+}
+
+// GetStudentQueuePosition gets the position of a user in queue.
+// It returns false as the second argument if user is not registered at all in this course.
+// For the first argument, it returns 0 if user is in the registered users. Otherwise, it returns
+// the index of user in queue (1-indexed)
+func (c *Course) GetStudentQueuePosition(id StudentID) (uint, bool) {
+	// Lock for read
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	// Check normal registered users
+	if _, exists := c.RegisteredStudents[id]; exists {
+		return 0, true
+	}
+	// Check normal queue
+	index := c.ReserveQueue.Exists(id)
+	if index == -1 {
+		return 0, false
+	}
+	return uint(index + 1), true
+}
+
+// ToProtoCourse converts current course to proto.CourseData
+func (c *Course) ToProtoCourse() *proto.CourseData {
+	// Lock for read
+	c.mu.RLock()
+	result := &proto.CourseData{
+		CourseId:        int32(c.ID),
+		GroupId:         uint32(c.GroupID),
+		Units:           uint32(c.Units),
+		Capacity:        int32(c.Capacity),
+		RegisteredCount: uint32(len(c.RegisteredStudents)),
+		ExamTime:        c.ExamTime.Load(),
+		Lecturer:        c.Lecturer,
+	}
+	// Get the class time
+	days, start, end := c.ClassHeldTime.Get()
+	result.ClassTime = make([]*proto.ClassTime, len(days))
+	for i := range days {
+		result.ClassTime[i] = &proto.ClassTime{
+			Day:         proto.Weekday(days[i]),
+			StartMinute: uint32(start.t),
+			EndMinute:   uint32(end.t),
+		}
+	}
+	// Done
+	c.mu.RUnlock()
+	return result
 }
