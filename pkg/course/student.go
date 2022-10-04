@@ -1,6 +1,7 @@
 package course
 
 import (
+	"CourseEnrollment/pkg/proto"
 	"fmt"
 	"github.com/benbjohnson/clock"
 	"sync"
@@ -31,7 +32,7 @@ type Student struct {
 	// the group ID
 	RegisteredCourses map[CourseID]GroupID
 	// A simple locker for this user
-	mu sync.Mutex
+	mu sync.RWMutex
 }
 
 // EnrollCourse tries to enroll the student in a course.
@@ -208,6 +209,26 @@ func (s *Student) IsEnrollTimeOK() bool {
 	const enrollmentDurationMilliseconds = 60 * 60 * 1000
 	now := studentClock.Now().UnixMilli()
 	return now > s.EnrollmentStartTime && now < s.EnrollmentStartTime+enrollmentDurationMilliseconds
+}
+
+// GetEnrolledCoursesProto gets all the enrolled courses of user as a protobuf message
+func (s *Student) GetEnrolledCoursesProto(courses *Courses) *proto.StudentCourseDataArray {
+	// Lock student
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	// Create the result and populate it
+	result := &proto.StudentCourseDataArray{
+		Data: make([]*proto.StudentCourseData, 0, len(s.RegisteredCourses)),
+	}
+	for courseID, groupID := range s.RegisteredCourses {
+		course := courses.GetCourse(courseID, groupID)
+		if course == nil {
+			panic(fmt.Sprintf("invalid registered lesson %d-%d for user %d", courseID, groupID, s.ID))
+		}
+		result.Data = append(result.Data, course.ToStudentCourseDataProto(s.ID))
+	}
+	// Done
+	return result
 }
 
 // examTimesIntersect checks if two exam times intersect.

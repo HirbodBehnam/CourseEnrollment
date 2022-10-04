@@ -229,10 +229,9 @@ func (c *Course) threadUnsafeCanBeEnrolled() bool {
 // It returns false as the second argument if user is not registered at all in this course.
 // For the first argument, it returns 0 if user is in the registered users. Otherwise, it returns
 // the index of user in queue (1-indexed)
-func (c *Course) GetStudentQueuePosition(id StudentID) (uint, bool) {
-	// Lock for read
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+//
+// This method is not thread safe
+func (c *Course) getStudentQueuePosition(id StudentID) (uint, bool) {
 	// Check normal registered users
 	if _, exists := c.RegisteredStudents[id]; exists {
 		return 0, true
@@ -247,8 +246,15 @@ func (c *Course) GetStudentQueuePosition(id StudentID) (uint, bool) {
 
 // ToProtoCourse converts current course to proto.CourseData
 func (c *Course) ToProtoCourse() *proto.CourseData {
-	// Lock for read
 	c.mu.RLock()
+	result := c.threadUnsafeToProtoCourse()
+	c.mu.RUnlock()
+	return result
+}
+
+// threadUnsafeToProtoCourse does not lock the mutex in course and
+// gets the protobuf representation of this Course
+func (c *Course) threadUnsafeToProtoCourse() *proto.CourseData {
 	result := &proto.CourseData{
 		CourseId:        int32(c.ID),
 		GroupId:         uint32(c.GroupID),
@@ -268,7 +274,24 @@ func (c *Course) ToProtoCourse() *proto.CourseData {
 			EndMinute:   uint32(end.t),
 		}
 	}
-	// Done
+	return result
+}
+
+// ToStudentCourseDataProto gets the data which needs to be sent when user wants to see their
+// enrolled courses.
+//
+// Passing a student ID which is not enrolled in this course causes this method to panic
+func (c *Course) ToStudentCourseDataProto(std StudentID) *proto.StudentCourseData {
+	c.mu.RLock()
+	position, ok := c.getStudentQueuePosition(std)
+	if !ok {
+		c.mu.RUnlock()
+		panic(fmt.Sprintf("requested student course data of a %d which is not registered in course %d-%d", std, c.ID, c.GroupID))
+	}
+	result := &proto.StudentCourseData{
+		Course:               c.threadUnsafeToProtoCourse(),
+		ReserveQueuePosition: uint32(position),
+	}
 	c.mu.RUnlock()
 	return result
 }

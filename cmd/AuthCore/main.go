@@ -37,6 +37,7 @@ func main() {
 	studentRouter.PUT("/course", api.ParseEnrollmentBody(), endpointApi.EnrollStudent)
 	studentRouter.PATCH("/course", api.ParseEnrollmentBody(), endpointApi.ChangeGroupOfStudent)
 	studentRouter.DELETE("/course", endpointApi.DisenrollStudent)
+	studentRouter.GET("/course")
 	// Admin endpoints
 	// TODO
 	// Listen
