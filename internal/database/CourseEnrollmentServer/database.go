@@ -44,7 +44,7 @@ func (db *Database) GetDepartments() (course.Departments, error) {
 // GetCourses will get the list of courses from database.
 // It also updates the courses registered list.
 func (db *Database) GetCourses() (*course.Courses, error) {
-	rows, err := db.db.Query(context.Background(), "SELECT course_id, group_id, for_department, units, capacity, reserve_capacity, exam_time, class_time, sex_lock FROM courses")
+	rows, err := db.db.Query(context.Background(), "SELECT course_id, group_id, for_department, units, capacity, reserve_capacity, exam_time, class_time, sex_lock, lecturer FROM courses")
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot query courses")
 	}
@@ -56,14 +56,18 @@ func (db *Database) GetCourses() (*course.Courses, error) {
 		currentCourse := new(course.Course)
 		var examTime sql.NullTime
 		err = rows.Scan(&currentCourse.ID, &currentCourse.GroupID, &currentCourse.Department, &currentCourse.Units, &currentCourse.Capacity, &currentCourse.ReserveCapacity,
-			&examTime, &currentCourse.ClassHeldTime, &currentCourse.SexLock)
+			&examTime, &currentCourse.ClassHeldTime, &currentCourse.SexLock, &currentCourse.Lecturer)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot scan course")
 		}
 		// Update some missing info based on scanned ones
 		currentCourse.ReserveQueue = util.NewQueue[course.StudentID]()
 		currentCourse.RegisteredStudents = make(map[course.StudentID]struct{}, currentCourse.Capacity)
-		currentCourse.ExamTime.Store(examTime.Time.Unix())
+		if examTime.Valid {
+			currentCourse.ExamTime.Store(examTime.Time.Unix())
+		} else {
+			currentCourse.ExamTime.Store(0)
+		}
 		// Get the courses registered list
 		err = db.updateCourseRegistered(currentCourse)
 		if err != nil {

@@ -28,7 +28,7 @@ type Course struct {
 	GroupID GroupID
 	// What is the department of this course?
 	Department DepartmentID
-	// Who lectures this course? TODO
+	// Who lectures this course?
 	Lecturer string
 	// Number of units
 	Units uint8
@@ -65,6 +65,21 @@ func (c *Courses) GetCourse(courseID CourseID, groupID GroupID) *Course {
 		if course.GroupID == groupID {
 			result = course
 			break
+		}
+	}
+	c.mu.RUnlock()
+	return result
+}
+
+// GetDepartmentCoursesProto gets all courses in a department
+func (c *Courses) GetDepartmentCoursesProto(id DepartmentID) *proto.DepartmentCourses {
+	c.mu.RLock()
+	result := new(proto.DepartmentCourses)
+	for _, courseWithSameGroups := range c.courses {
+		if courseWithSameGroups[0].Department == id {
+			for _, course := range courseWithSameGroups {
+				result.Courses = append(result.Courses, course.ToProtoCourse())
+			}
 		}
 	}
 	c.mu.RUnlock()

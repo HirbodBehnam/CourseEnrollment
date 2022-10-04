@@ -18,3 +18,8 @@ func (api *API) GetStudentEnrolledCourses(_ context.Context, req *proto.GetStude
 	// Get enrolled courses
 	return std.GetEnrolledCoursesProto(api.Courses), nil
 }
+
+// GetCoursesOfDepartment returns all the courses in a department
+func (api *API) GetCoursesOfDepartment(_ context.Context, req *proto.GetDepartmentCoursesRequest) (*proto.DepartmentCourses, error) {
+	return api.Courses.GetDepartmentCoursesProto(course.DepartmentID(req.GetDepartmentId())), nil
+}
