@@ -111,17 +111,21 @@ func (c *Course) threadUnsafeEnrollStudent(studentID StudentID, batcher Batcher)
 		return false, nil
 	}
 	if batcher != nil {
-		// We queue the message in batcher and hope that it'll
+		// We queue the message in batcher
 		err := batcher.ProcessDatabaseQuery(c.Department, &proto.CourseDatabaseBatchMessage{
-			Action:    proto.CourseDatabaseBatchAction_Enroll,
-			StudentId: uint64(studentID),
-			CourseId:  int32(c.ID),
-			GroupId:   uint32(c.GroupID),
+			Action: &proto.CourseDatabaseBatchMessage_Enroll{
+				Enroll: &proto.CourseDatabaseBatchEnrollMessage{
+					StudentId: uint64(studentID),
+					CourseId:  int32(c.ID),
+					GroupId:   uint32(c.GroupID),
+				},
+			},
 		})
 		if err != nil {
 			return false, BatchError{err}
 		}
 	}
+
 	// At first check the registered count
 	if len(c.RegisteredStudents) < c.Capacity {
 		c.RegisteredStudents[studentID] = struct{}{}
@@ -155,10 +159,12 @@ func (c *Course) threadUnsafeDisenrollStudent(studentID StudentID, batcher Batch
 	if batcher != nil {
 		// Put data in batcher
 		err := batcher.ProcessDatabaseQuery(c.Department, &proto.CourseDatabaseBatchMessage{
-			Action:    proto.CourseDatabaseBatchAction_Disenroll,
-			StudentId: uint64(studentID),
-			CourseId:  int32(c.ID),
-			GroupId:   uint32(c.GroupID),
+			Action: &proto.CourseDatabaseBatchMessage_Disenroll{
+				Disenroll: &proto.CourseDatabaseBatchDisenrollMessage{
+					StudentId: uint64(studentID),
+					CourseId:  int32(c.ID),
+				},
+			},
 		})
 		if err != nil {
 			return BatchError{err}
@@ -217,10 +223,13 @@ func (c *Course) ChangeGroupOfStudent(studentID StudentID, other *Course, batche
 	}
 	// Send data in batcher
 	err := batcher.ProcessDatabaseQuery(c.Department, &proto.CourseDatabaseBatchMessage{
-		Action:    proto.CourseDatabaseBatchAction_ChangeGroup,
-		StudentId: uint64(studentID),
-		CourseId:  int32(c.ID),
-		GroupId:   uint32(other.GroupID),
+		Action: &proto.CourseDatabaseBatchMessage_ChangeGroup{
+			ChangeGroup: &proto.CourseDatabaseBatchChangeGroupMessage{
+				StudentId: uint64(studentID),
+				CourseId:  int32(c.ID),
+				GroupId:   uint32(other.GroupID),
+			},
+		},
 	})
 	if err != nil {
 		return false, BatchError{err}

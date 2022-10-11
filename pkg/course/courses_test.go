@@ -66,10 +66,13 @@ func TestCourseEnrollStudent(t *testing.T) {
 				dep  DepartmentID
 			}{
 				data: &proto.CourseDatabaseBatchMessage{
-					Action:    proto.CourseDatabaseBatchAction_Enroll,
-					StudentId: uint64(i),
-					CourseId:  2,
-					GroupId:   3,
+					Action: &proto.CourseDatabaseBatchMessage_Enroll{
+						Enroll: &proto.CourseDatabaseBatchEnrollMessage{
+							StudentId: uint64(i),
+							CourseId:  2,
+							GroupId:   3,
+						},
+					},
 				},
 				dep: DepartmentID(4),
 			})
@@ -183,19 +186,23 @@ func TestCourseUnrollStudent(t *testing.T) {
 		}{
 			{
 				data: &proto.CourseDatabaseBatchMessage{
-					Action:    proto.CourseDatabaseBatchAction_Disenroll,
-					StudentId: uint64(2),
-					CourseId:  1,
-					GroupId:   1,
+					Action: &proto.CourseDatabaseBatchMessage_Disenroll{
+						Disenroll: &proto.CourseDatabaseBatchDisenrollMessage{
+							StudentId: uint64(2),
+							CourseId:  1,
+						},
+					},
 				},
 				dep: DepartmentID(4),
 			},
 			{
 				data: &proto.CourseDatabaseBatchMessage{
-					Action:    proto.CourseDatabaseBatchAction_Disenroll,
-					StudentId: uint64(1),
-					CourseId:  1,
-					GroupId:   1,
+					Action: &proto.CourseDatabaseBatchMessage_Disenroll{
+						Disenroll: &proto.CourseDatabaseBatchDisenrollMessage{
+							StudentId: uint64(1),
+							CourseId:  1,
+						},
+					},
 				},
 				dep: DepartmentID(4),
 			}}, broker.messages)
@@ -369,10 +376,13 @@ func TestCourseChangeGroupOfStudent(t *testing.T) {
 		}{
 			{
 				data: &proto.CourseDatabaseBatchMessage{
-					Action:    proto.CourseDatabaseBatchAction_ChangeGroup,
-					StudentId: uint64(1),
-					CourseId:  1,
-					GroupId:   2,
+					Action: &proto.CourseDatabaseBatchMessage_ChangeGroup{
+						ChangeGroup: &proto.CourseDatabaseBatchChangeGroupMessage{
+							StudentId: uint64(1),
+							CourseId:  1,
+							GroupId:   2,
+						},
+					},
 				},
 				dep: DepartmentID(4),
 			},

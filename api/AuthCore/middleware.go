@@ -63,6 +63,17 @@ func StudentOnly() gin.HandlerFunc {
 	}
 }
 
+// StaffOnly will only allow staffs to access this endpoint.
+// It must be called after JWTAuthMiddleware
+func StaffOnly() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if !c.MustGet(authInfoKey).(AuthData).IsStaff {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{reasonKey: "students only!"})
+			return
+		}
+	}
+}
+
 // ParseEnrollmentBody will parse the body of a request into CourseEnrollmentRequest
 func ParseEnrollmentBody() gin.HandlerFunc {
 	return func(c *gin.Context) {

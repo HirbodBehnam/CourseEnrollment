@@ -47,13 +47,13 @@ func main() {
 // processQuery will apply the query in database
 func processQuery(database db.Database, query *proto.CourseDatabaseBatchMessage) {
 	var err error
-	switch query.Action {
-	case proto.CourseDatabaseBatchAction_Enroll:
-		err = database.EnrollCourse(course.StudentID(query.StudentId), course.CourseID(query.CourseId), course.GroupID(query.GroupId))
-	case proto.CourseDatabaseBatchAction_Disenroll:
-		err = database.DisenrollCourse(course.StudentID(query.StudentId), course.CourseID(query.CourseId))
-	case proto.CourseDatabaseBatchAction_ChangeGroup:
-		err = database.ChangeCourseGroup(course.StudentID(query.StudentId), course.CourseID(query.CourseId), course.GroupID(query.GroupId))
+	switch data := query.GetAction().(type) {
+	case *proto.CourseDatabaseBatchMessage_Enroll:
+		err = database.EnrollCourse(course.StudentID(data.Enroll.StudentId), course.CourseID(data.Enroll.CourseId), course.GroupID(data.Enroll.GroupId))
+	case *proto.CourseDatabaseBatchMessage_Disenroll:
+		err = database.DisenrollCourse(course.StudentID(data.Disenroll.StudentId), course.CourseID(data.Disenroll.CourseId))
+	case *proto.CourseDatabaseBatchMessage_ChangeGroup:
+		err = database.ChangeCourseGroup(course.StudentID(data.ChangeGroup.StudentId), course.CourseID(data.ChangeGroup.CourseId), course.GroupID(data.ChangeGroup.GroupId))
 	default:
 		log.WithField("query", query).Error("invalid action")
 		return
