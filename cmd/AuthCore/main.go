@@ -28,7 +28,8 @@ func main() {
 	endpointApi.CoreClient, coreConnCloser = setupGRPCClient()
 	defer coreConnCloser()
 	// Setup endpoints
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Recovery())
 	// Login and token refresh
 	r.POST("/login", endpointApi.LoginUser)
 	r.POST("/refresh", endpointApi.JWTAuthMiddleware(), endpointApi.RefreshJWTToken)
