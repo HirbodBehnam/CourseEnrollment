@@ -9,7 +9,7 @@ import (
 var signingMethod = jwt.SigningMethodHS256
 
 // jwtTTL is the time interval which jwt token is valid
-const jwtTTL = time.Minute * 10
+const jwtTTL = time.Hour
 
 // jwtIssuer which is "course enrollment auth"
 const jwtIssuer = "cea"

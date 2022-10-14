@@ -68,7 +68,7 @@ func StudentOnly() gin.HandlerFunc {
 func StaffOnly() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !c.MustGet(authInfoKey).(AuthData).IsStaff {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{reasonKey: "students only!"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{reasonKey: "staff only!"})
 			return
 		}
 	}

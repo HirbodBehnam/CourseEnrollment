@@ -44,8 +44,8 @@ func main() {
 	staffRouter := r.Group("/staff", endpointApi.JWTAuthMiddleware(), api.StaffOnly())
 	staffRouter.PUT("/force-std", endpointApi.ForceEnroll)
 	staffRouter.DELETE("/force-std", endpointApi.ForceDisenroll)
-	staffRouter.GET("/student-courses", endpointApi.StudentsOfCourse)
-	staffRouter.GET("/course-students", endpointApi.CoursesOfStudent)
+	staffRouter.GET("/student-courses", endpointApi.CoursesOfStudent)
+	staffRouter.GET("/course-students", endpointApi.StudentsOfCourse)
 	// Listen
 	srv := &http.Server{
 		Addr:    os.Getenv("LISTEN_ADDRESS"),
