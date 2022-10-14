@@ -319,3 +319,24 @@ func (c *Course) ToStudentCourseDataProto(std StudentID) *proto.StudentCourseDat
 	c.mu.RUnlock()
 	return result
 }
+
+// ToStudentsOfCourseResponseProto gets all students enrolled in this course
+// including the ones in reserve queue.
+func (c *Course) ToStudentsOfCourseResponseProto() *proto.StudentsOfCourseResponse {
+	c.mu.RLock()
+	result := &proto.StudentsOfCourseResponse{
+		RegisteredStudents:    make([]uint64, 0, len(c.RegisteredStudents)),
+		ReservedQueueStudents: make([]uint64, c.ReserveQueue.Len()),
+	}
+	// Add main users
+	for std := range c.RegisteredStudents {
+		result.RegisteredStudents = append(result.RegisteredStudents, uint64(std))
+	}
+	// Add reserve queue
+	queue := c.ReserveQueue.CopyAsArray()
+	for i, std := range queue {
+		result.ReservedQueueStudents[i] = uint64(std)
+	}
+	c.mu.RUnlock()
+	return result
+}

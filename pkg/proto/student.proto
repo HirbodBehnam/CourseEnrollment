@@ -20,6 +20,12 @@ service CourseEnrollmentServerService {
   rpc GetStudentEnrolledCourses (GetStudentCoursesRequest) returns (StudentCourseDataArray);
   // This method will get all courses in a department
   rpc GetCoursesOfDepartment (GetDepartmentCoursesRequest) returns (DepartmentCourses);
+  // This method will list students registered in a course
+  rpc GetStudentsInCourse (StudentsOfCourseRequest) returns (StudentsOfCourseResponse);
+  // This endpoint must forcibly register a user in a course, add capacity if needed
+  rpc ForceEnroll (StudentEnrollRequest) returns (google.protobuf.Empty);
+  // This endpoint must forcibly dis-enroll a user from a course.
+  rpc ForceDisenroll (StudentDisenrollRequest) returns (google.protobuf.Empty);
 }
 
 // The request to enroll a student in a course
@@ -82,4 +88,19 @@ message StudentCourseDataArray {
 // DepartmentCourses is an array of courses
 message DepartmentCourses {
   repeated CourseData courses = 1;
+}
+
+// The request body to get students of a course
+message StudentsOfCourseRequest {
+  int32 course_id = 1;
+  uint32 group_id = 2;
+}
+
+// The result of the request which contains list of students in a course.
+message StudentsOfCourseResponse {
+  // Registered students with no specific order
+  repeated uint64 registered_students = 1;
+  // The reserve queue with order. First student is the first one which goes into registered
+  // users if anyone dis-enrolls from course.
+  repeated uint64 reserved_queue_students = 2;
 }
