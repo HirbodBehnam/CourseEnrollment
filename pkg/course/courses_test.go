@@ -3,6 +3,7 @@ package course
 import (
 	"CourseEnrollment/pkg/proto"
 	"CourseEnrollment/pkg/util"
+	"context"
 	"errors"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -19,7 +20,7 @@ func TestCourseEnrollStudent(t *testing.T) {
 		}
 		// Add to registered courses
 		for i := 0; i < course.Capacity; i++ {
-			assertion.True(course.EnrollStudent(StudentID(i), noOpBatcher{}))
+			assertion.True(course.EnrollStudent(context.Background(), StudentID(i), noOpBatcher{}))
 		}
 		// Check
 		assertion.Len(course.RegisteredStudents, course.Capacity)
@@ -30,7 +31,7 @@ func TestCourseEnrollStudent(t *testing.T) {
 		assertion.Equal(0, course.ReserveQueue.Len())
 		// Add to reserve queue
 		for i := 0; i < course.ReserveCapacity; i++ {
-			assertion.True(course.EnrollStudent(StudentID(course.ReserveCapacity+i), noOpBatcher{}))
+			assertion.True(course.EnrollStudent(context.Background(), StudentID(course.ReserveCapacity+i), noOpBatcher{}))
 		}
 		assertion.Equal(course.ReserveCapacity, course.ReserveQueue.Len())
 		for i := 0; i < course.ReserveCapacity; i++ {
@@ -39,7 +40,7 @@ func TestCourseEnrollStudent(t *testing.T) {
 		}
 		// Add over capacity
 		for i := 0; i < 100; i++ {
-			assertion.False(course.EnrollStudent(StudentID(course.ReserveCapacity+course.Capacity+i), noOpBatcher{}))
+			assertion.False(course.EnrollStudent(context.Background(), StudentID(course.ReserveCapacity+course.Capacity+i), noOpBatcher{}))
 		}
 	})
 	// Batcher
@@ -60,7 +61,7 @@ func TestCourseEnrollStudent(t *testing.T) {
 			dep  DepartmentID
 		}
 		for i := 0; i < 4; i++ {
-			assertion.True(course.EnrollStudent(StudentID(i), batcher))
+			assertion.True(course.EnrollStudent(context.Background(), StudentID(i), batcher))
 			expected = append(expected, struct {
 				data *proto.CourseDatabaseBatchMessage
 				dep  DepartmentID
@@ -78,7 +79,7 @@ func TestCourseEnrollStudent(t *testing.T) {
 			})
 		}
 		for i := 0; i < 4; i++ {
-			assertion.False(course.EnrollStudent(StudentID(i+4), batcher))
+			assertion.False(course.EnrollStudent(context.Background(), StudentID(i+4), batcher))
 		}
 		assertion.Equal(expected, batcher.messages)
 	})
@@ -95,14 +96,14 @@ func TestCourseEnrollStudent(t *testing.T) {
 		}
 		innerError := errors.New("test")
 		batcher := errorBatcher{innerError}
-		ok, err := course.EnrollStudent(StudentID(1), batcher)
+		ok, err := course.EnrollStudent(context.Background(), StudentID(1), batcher)
 		assertion.False(ok)
 		assertion.ErrorIs(err, BatchError{innerError})
 		assertion.Len(course.RegisteredStudents, 0)
 	})
 	t.Run("nil batcher", func(t *testing.T) {
 		assert.PanicsWithValue(t, "nil batcher", func() {
-			_, _ = new(Course).EnrollStudent(StudentID(1), nil)
+			_, _ = new(Course).EnrollStudent(context.Background(), StudentID(1), nil)
 		})
 	})
 }
@@ -120,15 +121,15 @@ func TestCourseUnrollStudent(t *testing.T) {
 		}
 		// At first, we just run unroll on empty course
 		assertion.PanicsWithValue("user 1 has lesson 1-1 in their registered courses but lesson map does not have this user", func() {
-			_ = course.DisenrollStudent(StudentID(1), noOpBatcher{})
+			_ = course.DisenrollStudent(context.Background(), StudentID(1), noOpBatcher{})
 		})
 		// Then, we add some users to registered user. We don't go to reserved capacity
 		for i := 0; i < 5; i++ {
-			assertion.True(course.EnrollStudent(StudentID(i), noOpBatcher{}))
+			assertion.True(course.EnrollStudent(context.Background(), StudentID(i), noOpBatcher{}))
 		}
 		// Then we unroll the first student
 		assertion.NotPanics(func() {
-			_ = course.DisenrollStudent(StudentID(0), noOpBatcher{})
+			_ = course.DisenrollStudent(context.Background(), StudentID(0), noOpBatcher{})
 		})
 		assertion.Len(course.RegisteredStudents, 4) // zero must be removed
 		for i := 1; i < 5; i++ {
@@ -138,13 +139,13 @@ func TestCourseUnrollStudent(t *testing.T) {
 		// Then we add them again
 		course.RegisteredStudents = make(map[StudentID]struct{})
 		for i := 0; i < course.Capacity; i++ {
-			assertion.True(course.EnrollStudent(StudentID(i), noOpBatcher{}))
+			assertion.True(course.EnrollStudent(context.Background(), StudentID(i), noOpBatcher{}))
 		}
 		for i := 0; i < course.ReserveCapacity; i++ {
-			assertion.True(course.EnrollStudent(StudentID(course.Capacity+i), noOpBatcher{}))
+			assertion.True(course.EnrollStudent(context.Background(), StudentID(course.Capacity+i), noOpBatcher{}))
 		}
 		assertion.NotPanics(func() {
-			_ = course.DisenrollStudent(StudentID(0), noOpBatcher{})
+			_ = course.DisenrollStudent(context.Background(), StudentID(0), noOpBatcher{})
 		})
 		// Check it
 		for i := 1; i < course.Capacity+1; i++ {
@@ -178,8 +179,8 @@ func TestCourseUnrollStudent(t *testing.T) {
 		course.ReserveQueue.Enqueue(StudentID(4))
 		// Check if data is queued correctly in message broker
 		broker := new(inMemoryBatcher)
-		assertion.NoError(course.DisenrollStudent(StudentID(2), broker))
-		assertion.NoError(course.DisenrollStudent(StudentID(1), broker))
+		assertion.NoError(course.DisenrollStudent(context.Background(), StudentID(2), broker))
+		assertion.NoError(course.DisenrollStudent(context.Background(), StudentID(1), broker))
 		assertion.Equal([]struct {
 			data *proto.CourseDatabaseBatchMessage
 			dep  DepartmentID
@@ -228,7 +229,7 @@ func TestCourseUnrollStudent(t *testing.T) {
 		course.ReserveQueue.Enqueue(StudentID(4))
 		// Check the data if broker returns error
 		innerError := errors.New("my error")
-		assert.ErrorIs(t, course.DisenrollStudent(StudentID(1), errorBatcher{innerError}), BatchError{innerError})
+		assert.ErrorIs(t, course.DisenrollStudent(context.Background(), StudentID(1), errorBatcher{innerError}), BatchError{innerError})
 		assert.Equal(t, map[StudentID]struct{}{
 			StudentID(1): {},
 			StudentID(2): {},
@@ -236,7 +237,7 @@ func TestCourseUnrollStudent(t *testing.T) {
 	})
 	t.Run("nil batcher", func(t *testing.T) {
 		assert.PanicsWithValue(t, "nil batcher", func() {
-			_ = new(Course).DisenrollStudent(StudentID(1), nil)
+			_ = new(Course).DisenrollStudent(context.Background(), StudentID(1), nil)
 		})
 	})
 }
@@ -246,19 +247,19 @@ func TestCourseChangeGroupOfStudent(t *testing.T) {
 		course1 := Course{ID: CourseID(1)}
 		course2 := Course{ID: CourseID(2)}
 		assert.PanicsWithValue(t, "different courses provided", func() {
-			_, _ = course1.ChangeGroupOfStudent(StudentID(1), &course2, noOpBatcher{})
+			_, _ = course1.ChangeGroupOfStudent(context.Background(), StudentID(1), &course2, noOpBatcher{})
 		})
 		assert.PanicsWithValue(t, "different courses provided", func() {
-			_, _ = course2.ChangeGroupOfStudent(StudentID(1), &course1, noOpBatcher{})
+			_, _ = course2.ChangeGroupOfStudent(context.Background(), StudentID(1), &course1, noOpBatcher{})
 		})
 	})
 	t.Run("same group", func(t *testing.T) {
 		course := Course{ID: CourseID(1), GroupID: GroupID(1)}
 		assert.PanicsWithValue(t, "same group provided", func() {
-			_, _ = course.ChangeGroupOfStudent(StudentID(1), &course, noOpBatcher{})
+			_, _ = course.ChangeGroupOfStudent(context.Background(), StudentID(1), &course, noOpBatcher{})
 		})
 		assert.PanicsWithValue(t, "same group provided", func() {
-			_, _ = course.ChangeGroupOfStudent(StudentID(1), &course, noOpBatcher{})
+			_, _ = course.ChangeGroupOfStudent(context.Background(), StudentID(1), &course, noOpBatcher{})
 		})
 	})
 	t.Run("invalid student", func(t *testing.T) {
@@ -270,7 +271,7 @@ func TestCourseChangeGroupOfStudent(t *testing.T) {
 		}
 		course2 := Course{ID: CourseID(1), GroupID: GroupID(2)}
 		assert.PanicsWithValue(t, "student 1 does not exists in course 1-1", func() {
-			_, _ = course1.ChangeGroupOfStudent(StudentID(1), &course2, noOpBatcher{})
+			_, _ = course1.ChangeGroupOfStudent(context.Background(), StudentID(1), &course2, noOpBatcher{})
 		})
 	})
 	t.Run("capacity reached", func(t *testing.T) {
@@ -287,7 +288,7 @@ func TestCourseChangeGroupOfStudent(t *testing.T) {
 			ReserveCapacity:    0,
 			ReserveQueue:       util.NewQueue[StudentID](),
 		}
-		res, err := course1.ChangeGroupOfStudent(StudentID(1), &course2, noOpBatcher{})
+		res, err := course1.ChangeGroupOfStudent(context.Background(), StudentID(1), &course2, noOpBatcher{})
 		assert.NoError(t, err)
 		assert.False(t, res)
 	})
@@ -308,7 +309,7 @@ func TestCourseChangeGroupOfStudent(t *testing.T) {
 			ReserveCapacity:    0,
 			ReserveQueue:       util.NewQueue[StudentID](),
 		}
-		res, err := course1.ChangeGroupOfStudent(StudentID(1), &course2, noOpBatcher{})
+		res, err := course1.ChangeGroupOfStudent(context.Background(), StudentID(1), &course2, noOpBatcher{})
 		assert.NoError(t, err)
 		assert.True(t, res)
 		assert.Len(t, course1.RegisteredStudents, 0)
@@ -332,7 +333,7 @@ func TestCourseChangeGroupOfStudent(t *testing.T) {
 			ReserveCapacity:    1,
 			ReserveQueue:       util.NewQueue[StudentID](),
 		}
-		res, err := course1.ChangeGroupOfStudent(StudentID(1), &course2, noOpBatcher{})
+		res, err := course1.ChangeGroupOfStudent(context.Background(), StudentID(1), &course2, noOpBatcher{})
 		assert.NoError(t, err)
 		assert.True(t, res)
 		assert.Equal(t, map[StudentID]struct{}{StudentID(2): {}}, course1.RegisteredStudents)
@@ -362,11 +363,11 @@ func TestCourseChangeGroupOfStudent(t *testing.T) {
 		}
 		broker := new(inMemoryBatcher)
 		// No error test
-		res, err := course1.ChangeGroupOfStudent(StudentID(1), &course2, broker)
+		res, err := course1.ChangeGroupOfStudent(context.Background(), StudentID(1), &course2, broker)
 		assert.NoError(t, err)
 		assert.True(t, res)
 		// Capacity full test
-		res, err = course1.ChangeGroupOfStudent(StudentID(2), &course2, broker)
+		res, err = course1.ChangeGroupOfStudent(context.Background(), StudentID(2), &course2, broker)
 		assert.NoError(t, err)
 		assert.False(t, res)
 		// Test

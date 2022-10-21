@@ -1,11 +1,14 @@
 package course
 
-import "CourseEnrollment/pkg/proto"
+import (
+	"CourseEnrollment/pkg/proto"
+	"context"
+)
 
 // Batcher must send the request in a queue to be processed later
 type Batcher interface {
 	// ProcessDatabaseQuery must send it into queue
-	ProcessDatabaseQuery(DepartmentID, *proto.CourseDatabaseBatchMessage) error
+	ProcessDatabaseQuery(context.Context, DepartmentID, *proto.CourseDatabaseBatchMessage) error
 }
 
 // BatchError is an error which Batcher.ProcessDatabaseQuery can return

@@ -3,6 +3,7 @@ package course
 import (
 	"CourseEnrollment/pkg/proto"
 	"CourseEnrollment/pkg/util"
+	"context"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -93,7 +94,7 @@ func (c *Courses) GetDepartmentCoursesProto(id DepartmentID) *proto.DepartmentCo
 // (due to limitations), it ties to add they in Course.ReserveQueue. If that's also not possible,
 // it returns false.
 // It also does not check if the student is enrolled in this course or not
-func (c *Course) EnrollStudent(studentID StudentID, batcher Batcher) (bool, error) {
+func (c *Course) EnrollStudent(ctx context.Context, studentID StudentID, batcher Batcher) (bool, error) {
 	if batcher == nil {
 		panic("nil batcher")
 	}
@@ -101,26 +102,28 @@ func (c *Course) EnrollStudent(studentID StudentID, batcher Batcher) (bool, erro
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	// Could not enroll the course
-	return c.threadUnsafeEnrollStudent(studentID, batcher)
+	return c.threadUnsafeEnrollStudent(ctx, studentID, batcher)
 }
 
 // threadUnsafeEnrollStudent does EnrollStudent but without locking the course
-func (c *Course) threadUnsafeEnrollStudent(studentID StudentID, batcher Batcher) (bool, error) {
+func (c *Course) threadUnsafeEnrollStudent(ctx context.Context, studentID StudentID, batcher Batcher) (bool, error) {
 	// We check the space of this course and return early
 	if !c.threadUnsafeCanBeEnrolled() {
 		return false, nil
 	}
 	if batcher != nil {
 		// We queue the message in batcher
-		err := batcher.ProcessDatabaseQuery(c.Department, &proto.CourseDatabaseBatchMessage{
-			Action: &proto.CourseDatabaseBatchMessage_Enroll{
-				Enroll: &proto.CourseDatabaseBatchEnrollMessage{
-					StudentId: uint64(studentID),
-					CourseId:  int32(c.ID),
-					GroupId:   uint32(c.GroupID),
+		err := batcher.ProcessDatabaseQuery(ctx,
+			c.Department,
+			&proto.CourseDatabaseBatchMessage{
+				Action: &proto.CourseDatabaseBatchMessage_Enroll{
+					Enroll: &proto.CourseDatabaseBatchEnrollMessage{
+						StudentId: uint64(studentID),
+						CourseId:  int32(c.ID),
+						GroupId:   uint32(c.GroupID),
+					},
 				},
-			},
-		})
+			})
 		if err != nil {
 			return false, BatchError{err}
 		}
@@ -143,29 +146,32 @@ func (c *Course) threadUnsafeEnrollStudent(studentID StudentID, batcher Batcher)
 // DisenrollStudent will remove the student from course.
 //
 // Will panic if the student is not enrolled in course.
-func (c *Course) DisenrollStudent(studentID StudentID, batcher Batcher) error {
+func (c *Course) DisenrollStudent(ctx context.Context, studentID StudentID, batcher Batcher) error {
 	if batcher == nil {
 		panic("nil batcher")
 	}
 	// Lock the course and unlock it when we are leaving
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return c.threadUnsafeDisenrollStudent(studentID, batcher)
+	return c.threadUnsafeDisenrollStudent(ctx, studentID, batcher)
 }
 
 // threadUnsafeDisenrollStudent is basically DisenrollStudent but without locking
 // the course
-func (c *Course) threadUnsafeDisenrollStudent(studentID StudentID, batcher Batcher) error {
+func (c *Course) threadUnsafeDisenrollStudent(ctx context.Context, studentID StudentID, batcher Batcher) error {
 	if batcher != nil {
 		// Put data in batcher
-		err := batcher.ProcessDatabaseQuery(c.Department, &proto.CourseDatabaseBatchMessage{
-			Action: &proto.CourseDatabaseBatchMessage_Disenroll{
-				Disenroll: &proto.CourseDatabaseBatchDisenrollMessage{
-					StudentId: uint64(studentID),
-					CourseId:  int32(c.ID),
+		err := batcher.ProcessDatabaseQuery(
+			ctx,
+			c.Department,
+			&proto.CourseDatabaseBatchMessage{
+				Action: &proto.CourseDatabaseBatchMessage_Disenroll{
+					Disenroll: &proto.CourseDatabaseBatchDisenrollMessage{
+						StudentId: uint64(studentID),
+						CourseId:  int32(c.ID),
+					},
 				},
-			},
-		})
+			})
 		if err != nil {
 			return BatchError{err}
 		}
@@ -189,7 +195,7 @@ func (c *Course) threadUnsafeDisenrollStudent(studentID StudentID, batcher Batch
 }
 
 // ChangeGroupOfStudent tries to change the group of a student between two courses
-func (c *Course) ChangeGroupOfStudent(studentID StudentID, other *Course, batcher Batcher) (bool, error) {
+func (c *Course) ChangeGroupOfStudent(ctx context.Context, studentID StudentID, other *Course, batcher Batcher) (bool, error) {
 	if batcher == nil {
 		panic("nil batcher")
 	}
@@ -222,24 +228,27 @@ func (c *Course) ChangeGroupOfStudent(studentID StudentID, other *Course, batche
 		return false, nil
 	}
 	// Send data in batcher
-	err := batcher.ProcessDatabaseQuery(c.Department, &proto.CourseDatabaseBatchMessage{
-		Action: &proto.CourseDatabaseBatchMessage_ChangeGroup{
-			ChangeGroup: &proto.CourseDatabaseBatchChangeGroupMessage{
-				StudentId: uint64(studentID),
-				CourseId:  int32(c.ID),
-				GroupId:   uint32(other.GroupID),
+	err := batcher.ProcessDatabaseQuery(
+		ctx,
+		c.Department,
+		&proto.CourseDatabaseBatchMessage{
+			Action: &proto.CourseDatabaseBatchMessage_ChangeGroup{
+				ChangeGroup: &proto.CourseDatabaseBatchChangeGroupMessage{
+					StudentId: uint64(studentID),
+					CourseId:  int32(c.ID),
+					GroupId:   uint32(other.GroupID),
+				},
 			},
-		},
-	})
+		})
 	if err != nil {
 		return false, BatchError{err}
 	}
 	// Now try to add it to other course
-	if ok, _ := other.threadUnsafeEnrollStudent(studentID, nil); !ok {
+	if ok, _ := other.threadUnsafeEnrollStudent(ctx, studentID, nil); !ok {
 		panic("could not change group due to capacity and a is message in broker")
 	}
 	// Now remove the user from this course
-	_ = c.threadUnsafeDisenrollStudent(studentID, nil) // no error because no batcher
+	_ = c.threadUnsafeDisenrollStudent(ctx, studentID, nil) // no error because no batcher
 	return true, nil
 }
 

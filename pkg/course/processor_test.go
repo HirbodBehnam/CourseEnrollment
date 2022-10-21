@@ -2,13 +2,14 @@ package course
 
 import (
 	"CourseEnrollment/pkg/proto"
+	"context"
 	"sync"
 )
 
 type noOpBatcher struct {
 }
 
-func (noOpBatcher) ProcessDatabaseQuery(DepartmentID, *proto.CourseDatabaseBatchMessage) error {
+func (noOpBatcher) ProcessDatabaseQuery(context.Context, DepartmentID, *proto.CourseDatabaseBatchMessage) error {
 	return nil
 }
 
@@ -20,7 +21,7 @@ type inMemoryBatcher struct {
 	mu sync.Mutex
 }
 
-func (b *inMemoryBatcher) ProcessDatabaseQuery(dep DepartmentID, data *proto.CourseDatabaseBatchMessage) error {
+func (b *inMemoryBatcher) ProcessDatabaseQuery(_ context.Context, dep DepartmentID, data *proto.CourseDatabaseBatchMessage) error {
 	b.mu.Lock()
 	b.messages = append(b.messages, struct {
 		data *proto.CourseDatabaseBatchMessage
@@ -34,6 +35,6 @@ type errorBatcher struct {
 	err error
 }
 
-func (b errorBatcher) ProcessDatabaseQuery(DepartmentID, *proto.CourseDatabaseBatchMessage) error {
+func (b errorBatcher) ProcessDatabaseQuery(context.Context, DepartmentID, *proto.CourseDatabaseBatchMessage) error {
 	return b.err
 }

@@ -2,6 +2,7 @@ package course
 
 import (
 	"CourseEnrollment/pkg/proto"
+	"context"
 	"fmt"
 	"github.com/benbjohnson/clock"
 	"sync"
@@ -37,7 +38,7 @@ type Student struct {
 
 // EnrollCourse tries to enroll the student in a course.
 // It does all the checks and then enrolls the student if possible.
-func (s *Student) EnrollCourse(courses *Courses, courseID CourseID, groupID GroupID, batcher Batcher) error {
+func (s *Student) EnrollCourse(ctx context.Context, courses *Courses, courseID CourseID, groupID GroupID, batcher Batcher) error {
 	// We check the start time at very first
 	if !s.IsEnrollTimeOK() {
 		return NotEnrollmentTimeErr
@@ -85,7 +86,7 @@ func (s *Student) EnrollCourse(courses *Courses, courseID CourseID, groupID Grou
 		}
 	}
 	// At last, we register the course
-	registered, err := course.EnrollStudent(s.ID, batcher)
+	registered, err := course.EnrollStudent(ctx, s.ID, batcher)
 	if err != nil {
 		return err
 	}
@@ -99,7 +100,7 @@ func (s *Student) EnrollCourse(courses *Courses, courseID CourseID, groupID Grou
 }
 
 // DisenrollCourse will remove student from a course from
-func (s *Student) DisenrollCourse(courses *Courses, courseID CourseID, batcher Batcher) error {
+func (s *Student) DisenrollCourse(ctx context.Context, courses *Courses, courseID CourseID, batcher Batcher) error {
 	// We check the start time at very first
 	if !s.IsEnrollTimeOK() {
 		return NotEnrollmentTimeErr
@@ -121,7 +122,7 @@ func (s *Student) DisenrollCourse(courses *Courses, courseID CourseID, batcher B
 		panic(fmt.Sprintf("invalid registered lesson %d-%d for user %d", courseID, groupID, s.ID))
 	}
 	// Disenroll
-	err := course.DisenrollStudent(s.ID, batcher)
+	err := course.DisenrollStudent(ctx, s.ID, batcher)
 	if err != nil {
 		return err
 	}
@@ -133,7 +134,7 @@ func (s *Student) DisenrollCourse(courses *Courses, courseID CourseID, batcher B
 }
 
 // ChangeGroup will atomically change group of a user in a course
-func (s *Student) ChangeGroup(courses *Courses, courseID CourseID, destinationGroupID GroupID, batcher Batcher) error {
+func (s *Student) ChangeGroup(ctx context.Context, courses *Courses, courseID CourseID, destinationGroupID GroupID, batcher Batcher) error {
 	// We check the start time at very first
 	if !s.IsEnrollTimeOK() {
 		return NotEnrollmentTimeErr
@@ -190,7 +191,7 @@ func (s *Student) ChangeGroup(courses *Courses, courseID CourseID, destinationGr
 		}
 	}
 	// Change the group
-	changed, err := sourceCourse.ChangeGroupOfStudent(s.ID, destinationCourse, batcher)
+	changed, err := sourceCourse.ChangeGroupOfStudent(ctx, s.ID, destinationCourse, batcher)
 	if err != nil {
 		return err
 	}

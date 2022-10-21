@@ -53,12 +53,12 @@ func (c RabbitMQBroker) Close() error {
 
 // ProcessDatabaseQuery will push a database query into queue.
 // DepartmentID is currently unused.
-func (c RabbitMQBroker) ProcessDatabaseQuery(_ course.DepartmentID, msg *proto.CourseDatabaseBatchMessage) error {
+func (c RabbitMQBroker) ProcessDatabaseQuery(ctx context.Context, _ course.DepartmentID, msg *proto.CourseDatabaseBatchMessage) error {
 	data, err := protobuf.Marshal(msg)
 	if err != nil {
 		return errors.Wrap(err, "cannot marshal")
 	}
-	return c.channel.PublishWithContext(context.Background(),
+	return c.channel.PublishWithContext(ctx,
 		"",
 		c.queue.Name,
 		false,
