@@ -17,8 +17,8 @@ func NewDatabase(db *pgxpool.Pool) Database {
 }
 
 // EnrollCourse will enroll a student in a course
-func (db Database) EnrollCourse(stdID course.StudentID, courseID course.CourseID, groupID course.GroupID) error {
-	_, err := db.db.Exec(context.Background(), "INSERT INTO enrolled_courses (course_id, group_id, student_id) VALUES ($1, $2, $3)", courseID, groupID, stdID)
+func (db Database) EnrollCourse(stdID course.StudentID, courseID course.CourseID, groupID course.GroupID, reserved bool) error {
+	_, err := db.db.Exec(context.Background(), "INSERT INTO enrolled_courses (course_id, group_id, student_id, reserved) VALUES ($1, $2, $3, $4)", courseID, groupID, stdID, reserved)
 	return err
 }
 
@@ -29,8 +29,8 @@ func (db Database) DisenrollCourse(stdID course.StudentID, courseID course.Cours
 }
 
 // ChangeCourseGroup will change the group of a user in an enrolled course
-func (db Database) ChangeCourseGroup(stdID course.StudentID, courseID course.CourseID, newGroupID course.GroupID) error {
-	_, err := db.db.Exec(context.Background(), "UPDATE enrolled_courses SET group_id=$1 WHERE course_id=$2 AND student_id=$3", newGroupID, courseID, stdID)
+func (db Database) ChangeCourseGroup(stdID course.StudentID, courseID course.CourseID, newGroupID course.GroupID, reserved bool) error {
+	_, err := db.db.Exec(context.Background(), "UPDATE enrolled_courses SET group_id=$1, reserved=$2 WHERE course_id=$3 AND student_id=$4", newGroupID, reserved, courseID, stdID)
 	return err
 }
 

@@ -49,11 +49,11 @@ func processQuery(database db.Database, query *proto.CourseDatabaseBatchMessage)
 	var err error
 	switch data := query.GetAction().(type) {
 	case *proto.CourseDatabaseBatchMessage_Enroll:
-		err = database.EnrollCourse(course.StudentID(data.Enroll.StudentId), course.CourseID(data.Enroll.CourseId), course.GroupID(data.Enroll.GroupId))
+		err = database.EnrollCourse(course.StudentID(data.Enroll.StudentId), course.CourseID(data.Enroll.CourseId), course.GroupID(data.Enroll.GroupId), data.Enroll.Reserved)
 	case *proto.CourseDatabaseBatchMessage_Disenroll:
 		err = database.DisenrollCourse(course.StudentID(data.Disenroll.StudentId), course.CourseID(data.Disenroll.CourseId))
 	case *proto.CourseDatabaseBatchMessage_ChangeGroup:
-		err = database.ChangeCourseGroup(course.StudentID(data.ChangeGroup.StudentId), course.CourseID(data.ChangeGroup.CourseId), course.GroupID(data.ChangeGroup.GroupId))
+		err = database.ChangeCourseGroup(course.StudentID(data.ChangeGroup.StudentId), course.CourseID(data.ChangeGroup.CourseId), course.GroupID(data.ChangeGroup.GroupId), data.ChangeGroup.Reserved)
 	default:
 		log.WithField("query", query).Error("invalid action")
 		return

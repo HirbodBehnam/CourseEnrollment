@@ -47,17 +47,13 @@ CREATE TABLE courses
     PRIMARY KEY (course_id, group_id)
 );
 
-/*
- As you can see, there is no reserved attribute here. This is because that we make sure that
- students get added in this table in order they get added in courses (in order they get enrolled).
- This is handled by sending the message when the lock of the course is acquired.
- */
 CREATE TABLE enrolled_courses
 (
     id         SERIAL PRIMARY KEY NOT NULL,
     course_id  INTEGER            NOT NULL,
     group_id   INTEGER            NOT NULL,
-    student_id INTEGER            NOT NULL
+    student_id INTEGER            NOT NULL,
+    reserved   BOOLEAN            NOT NULL
 );
 
 ALTER TABLE staff

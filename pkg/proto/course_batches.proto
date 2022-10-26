@@ -14,25 +14,29 @@ message CourseDatabaseBatchMessage {
 
 message CourseDatabaseBatchEnrollMessage {
   // The student ID which this message is for.
-  uint64 student_id = 2;
+  uint64 student_id = 1;
   // The course which user is trying to enroll in.
-  int32 course_id = 3;
+  int32 course_id = 2;
   // The group ID which user is trying to enroll in.
-  uint32 group_id = 4;
+  uint32 group_id = 3;
+  // True if user is in reserved queue
+  bool reserved = 4;
 }
 
 message CourseDatabaseBatchDisenrollMessage {
   // The student ID which this message is for.
-  uint64 student_id = 2;
+  uint64 student_id = 1;
   // The course which user is trying to disenroll from.
-  int32 course_id = 3;
+  int32 course_id = 2;
 }
 
 message CourseDatabaseBatchChangeGroupMessage {
   // The student ID which this message is for.
-  uint64 student_id = 2;
+  uint64 student_id = 1;
   // The course which user is trying to change group in.
-  int32 course_id = 3;
+  int32 course_id = 2;
   // The group ID which user is trying to change group to.
-  uint32 group_id = 4;
+  uint32 group_id = 3;
+  // True if user is in reserved queue
+  bool reserved = 4;
 }
