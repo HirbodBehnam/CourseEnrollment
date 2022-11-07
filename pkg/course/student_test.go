@@ -875,6 +875,225 @@ func TestStudentChangeGroupLock2(t *testing.T) {
 	}
 }
 
+func TestStudentForceEnrollCourse(t *testing.T) {
+	clk := clock.NewMock()
+	studentClock = clk
+	courses := Courses{
+		courses: map[CourseID][]*Course{
+			CourseID(1): {
+				{
+					ID:                 CourseID(1),
+					GroupID:            GroupID(1),
+					Units:              1,
+					Capacity:           5,
+					RegisteredStudents: map[StudentID]struct{}{},
+					ReserveCapacity:    5,
+					ReserveQueue:       util.NewQueue[StudentID](),
+					ExamTime:           newAtomicTimeUnix(time.Date(2022, 9, 12, 1, 0, 0, 0, time.UTC)),
+					ClassHeldTime: NewClassTime(
+						[]time.Weekday{time.Wednesday},
+						TimeOnly{13 * 60},
+						TimeOnly{15 * 60},
+					),
+				},
+				{
+					ID:                 CourseID(1),
+					GroupID:            GroupID(2),
+					Units:              1,
+					Capacity:           5,
+					RegisteredStudents: map[StudentID]struct{}{},
+					ReserveCapacity:    5,
+					ReserveQueue:       util.NewQueue[StudentID](),
+					ExamTime:           newAtomicTimeUnix(time.Date(2022, 9, 12, 1, 0, 0, 0, time.UTC)),
+					ClassHeldTime: NewClassTime(
+						[]time.Weekday{time.Wednesday},
+						TimeOnly{15 * 60},
+						TimeOnly{17 * 60},
+					),
+				},
+			},
+			CourseID(2): {
+				{
+					ID:                 CourseID(2),
+					GroupID:            GroupID(1),
+					Units:              3,
+					Capacity:           5,
+					RegisteredStudents: map[StudentID]struct{}{},
+					ReserveCapacity:    5,
+					ReserveQueue:       util.NewQueue[StudentID](),
+					ExamTime:           newAtomicTimeUnix(time.Date(2022, 9, 12, 1, 0, 0, 0, time.UTC)),
+					ClassHeldTime: NewClassTime(
+						[]time.Weekday{time.Saturday},
+						TimeOnly{13*60 + 30},
+						TimeOnly{15 * 60},
+					),
+				},
+			},
+			CourseID(3): {
+				{
+					ID:                 CourseID(3),
+					GroupID:            GroupID(1),
+					Units:              2,
+					Capacity:           5,
+					RegisteredStudents: map[StudentID]struct{}{},
+					ReserveCapacity:    5,
+					ReserveQueue:       util.NewQueue[StudentID](),
+					ExamTime:           newAtomicTimeUnix(time.Date(2022, 9, 12, 3, 0, 0, 0, time.UTC)),
+					ClassHeldTime: NewClassTime(
+						[]time.Weekday{time.Saturday, time.Monday},
+						TimeOnly{12 * 60},
+						TimeOnly{14 * 60},
+					),
+				},
+			},
+			CourseID(4): {
+				{
+					ID:                 CourseID(4),
+					GroupID:            GroupID(1),
+					Units:              2,
+					Capacity:           5,
+					RegisteredStudents: map[StudentID]struct{}{},
+					ReserveCapacity:    5,
+					ReserveQueue:       util.NewQueue[StudentID](),
+					ExamTime:           newAtomicTimeUnix(time.Date(2022, 9, 12, 4, 0, 0, 0, time.UTC)),
+					ClassHeldTime: NewClassTime(
+						[]time.Weekday{time.Friday},
+						TimeOnly{0},
+						TimeOnly{1},
+					),
+				},
+			},
+			CourseID(5): {
+				{
+					ID:                 CourseID(5),
+					GroupID:            GroupID(1),
+					Units:              2,
+					Capacity:           5,
+					RegisteredStudents: map[StudentID]struct{}{},
+					ReserveCapacity:    5,
+					ReserveQueue:       util.NewQueue[StudentID](),
+					ExamTime:           newAtomicTimeUnix(time.Date(2022, 9, 12, 5, 0, 0, 0, time.UTC)),
+					ClassHeldTime: NewClassTime(
+						[]time.Weekday{time.Friday},
+						TimeOnly{5},
+						TimeOnly{10},
+					),
+					SexLock: SexLockMaleOnly,
+				},
+				{
+					ID:                 CourseID(5),
+					GroupID:            GroupID(2),
+					Units:              2,
+					Capacity:           5,
+					RegisteredStudents: map[StudentID]struct{}{},
+					ReserveCapacity:    5,
+					ReserveQueue:       util.NewQueue[StudentID](),
+					ExamTime:           newAtomicTimeUnix(time.Date(2022, 9, 12, 5, 0, 0, 0, time.UTC)),
+					ClassHeldTime: NewClassTime(
+						[]time.Weekday{time.Friday},
+						TimeOnly{5},
+						TimeOnly{10},
+					),
+					SexLock: SexLockFemaleOnly,
+				},
+			},
+		},
+	}
+	t.Run("enrollment time check", func(t *testing.T) {
+		emptyCourses(&courses)
+		std := Student{RegisteredCourses: map[CourseID]GroupID{}}
+		std.MaxUnits = math.MaxUint8
+		clk.Set(time.Unix(10, 0))
+		std.EnrollmentStartTime = time.Unix(15, 0).UnixMilli()
+		assert.NoError(t, std.ForceEnrollCourse(context.Background(), &courses, CourseID(1), GroupID(1), noOpBatcher{}))
+	})
+	// We allow all other register times without setting them
+	clk.Set(time.Unix(1, 0))
+	// A non-existent course must throw an error
+	t.Run("non existent course", func(t *testing.T) {
+		emptyCourses(&courses)
+		std := Student{RegisteredCourses: map[CourseID]GroupID{}}
+		assert.ErrorIs(t, std.ForceEnrollCourse(context.Background(), &courses, CourseID(1), GroupID(10), noOpBatcher{}), NotExistsErr)
+		assert.ErrorIs(t, std.ForceEnrollCourse(context.Background(), &courses, CourseID(100), GroupID(1), noOpBatcher{}), NotExistsErr)
+	})
+	t.Run("sex lock", func(t *testing.T) {
+		emptyCourses(&courses)
+		std := Student{
+			StudentSex:        SexFemale,
+			MaxUnits:          math.MaxUint8,
+			RegisteredCourses: map[CourseID]GroupID{},
+		}
+		assert.NoError(t, std.ForceEnrollCourse(context.Background(), &courses, CourseID(5), GroupID(1), noOpBatcher{}))
+		std.RegisteredCourses = map[CourseID]GroupID{}
+		assert.NoError(t, std.ForceEnrollCourse(context.Background(), &courses, CourseID(5), GroupID(2), noOpBatcher{}))
+		std.StudentSex = SexMale
+		std.RegisteredCourses = map[CourseID]GroupID{}
+		assert.NoError(t, std.ForceEnrollCourse(context.Background(), &courses, CourseID(5), GroupID(2), noOpBatcher{}))
+		std.RegisteredCourses = map[CourseID]GroupID{}
+		assert.NoError(t, std.ForceEnrollCourse(context.Background(), &courses, CourseID(5), GroupID(1), noOpBatcher{}))
+	})
+	// Check max registered courses
+	t.Run("unit limit", func(t *testing.T) {
+		emptyCourses(&courses)
+		std := Student{
+			MaxUnits:          3,
+			RegisteredCourses: map[CourseID]GroupID{},
+		}
+		assert.NoError(t, std.ForceEnrollCourse(context.Background(), &courses, CourseID(2), GroupID(1), noOpBatcher{}))
+		assert.Equal(t, uint8(3), std.RegisteredUnits)
+		assert.NoError(t, std.ForceEnrollCourse(context.Background(), &courses, CourseID(1), GroupID(1), noOpBatcher{}))
+	})
+	// Do not allow already registered courses
+	t.Run("already registered", func(t *testing.T) {
+		emptyCourses(&courses)
+		std := Student{
+			MaxUnits:          math.MaxUint8,
+			RegisteredCourses: map[CourseID]GroupID{},
+		}
+		assert.NoError(t, std.ForceEnrollCourse(context.Background(), &courses, CourseID(1), GroupID(1), noOpBatcher{}))
+		assert.ErrorIs(t, std.ForceEnrollCourse(context.Background(), &courses, CourseID(1), GroupID(1), noOpBatcher{}), AlreadyRegisteredErr)
+		assert.ErrorIs(t, std.ForceEnrollCourse(context.Background(), &courses, CourseID(1), GroupID(2), noOpBatcher{}), AlreadyRegisteredErr)
+	})
+	t.Run("exam time", func(t *testing.T) {
+		emptyCourses(&courses)
+		std := Student{
+			MaxUnits: math.MaxUint8,
+			RegisteredCourses: map[CourseID]GroupID{
+				CourseID(1): GroupID(1),
+			},
+		}
+		assert.NoError(t, std.ForceEnrollCourse(context.Background(), &courses, CourseID(2), GroupID(1), noOpBatcher{}))
+	})
+	// Class times must not overlap as well
+	t.Run("class time", func(t *testing.T) {
+		emptyCourses(&courses)
+		std := Student{
+			MaxUnits: math.MaxUint8,
+			RegisteredCourses: map[CourseID]GroupID{
+				CourseID(2): GroupID(1),
+			},
+		}
+		assert.NoError(t, std.ForceEnrollCourse(context.Background(), &courses, CourseID(3), GroupID(1), noOpBatcher{}))
+	})
+	// Capacity error
+	t.Run("capacity", func(t *testing.T) {
+		emptyCourses(&courses)
+		courses.courses[CourseID(1)][0].Capacity = 1
+		courses.courses[CourseID(1)][0].RegisteredStudents = map[StudentID]struct{}{StudentID(100): {}}
+		courses.courses[CourseID(1)][0].ReserveCapacity = 1
+		courses.courses[CourseID(1)][0].ReserveQueue = util.NewQueue[StudentID]()
+		courses.courses[CourseID(1)][0].ReserveQueue.Enqueue(StudentID(101))
+		std := Student{
+			ID:                1,
+			MaxUnits:          math.MaxUint8,
+			RegisteredCourses: map[CourseID]GroupID{},
+		}
+		assert.NoError(t, std.ForceEnrollCourse(context.Background(), &courses, CourseID(1), GroupID(1), noOpBatcher{}))
+		assert.Equal(t, 2, courses.courses[CourseID(1)][0].Capacity)
+		assert.Equal(t, map[StudentID]struct{}{StudentID(100): {}, StudentID(1): {}}, courses.courses[CourseID(1)][0].RegisteredStudents)
+	})
+}
+
 func BenchmarkStudentAverage(b *testing.B) {
 	// Setup time and rng
 	clk := clock.NewMock()
@@ -1010,4 +1229,14 @@ func randomKeyFromMap[K comparable, V any](m map[K]V) K {
 		return k
 	}
 	panic("empty map")
+}
+
+// emptyCourses will empty all courses in a Courses object
+func emptyCourses(courses *Courses) {
+	for _, course := range courses.courses {
+		for _, group := range course {
+			group.RegisteredStudents = map[StudentID]struct{}{}
+			group.ReserveQueue = util.NewQueue[StudentID]()
+		}
+	}
 }

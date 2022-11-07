@@ -72,6 +72,7 @@ func TestCourseEnrollStudent(t *testing.T) {
 							StudentId: uint64(i),
 							CourseId:  2,
 							GroupId:   3,
+							Reserved:  i >= 2,
 						},
 					},
 				},
@@ -388,5 +389,168 @@ func TestCourseChangeGroupOfStudent(t *testing.T) {
 				dep: DepartmentID(4),
 			},
 		}, broker.messages)
+	})
+}
+
+func TestCourseForceEnrollStudent(t *testing.T) {
+	t.Run("general test", func(t *testing.T) {
+		assertion := assert.New(t)
+		course := Course{
+			Capacity:           2,
+			RegisteredStudents: make(map[StudentID]struct{}),
+			ReserveCapacity:    2,
+			ReserveQueue:       util.NewQueue[StudentID](),
+		}
+		// Add to registered courses
+		for i := 0; i < course.Capacity; i++ {
+			assertion.NoError(course.ForceEnroll(context.Background(), StudentID(i), noOpBatcher{}))
+		}
+		assertion.Equal(map[StudentID]struct{}{
+			StudentID(0): {},
+			StudentID(1): {},
+		}, course.RegisteredStudents)
+		assertion.Equal(0, course.ReserveQueue.Len())
+		// Add to main queue again!
+		for i := 0; i < course.ReserveCapacity; i++ {
+			assertion.NoError(course.ForceEnroll(context.Background(), StudentID(course.ReserveCapacity+i), noOpBatcher{}))
+		}
+		assertion.Equal(map[StudentID]struct{}{
+			StudentID(0): {},
+			StudentID(1): {},
+			StudentID(2): {},
+			StudentID(3): {},
+		}, course.RegisteredStudents)
+		assertion.Equal(0, course.ReserveQueue.Len())
+		assertion.Equal(4, course.Capacity)
+	})
+	t.Run("batcher test", func(t *testing.T) {
+		assertion := assert.New(t)
+		course := Course{
+			ID:                 CourseID(1),
+			GroupID:            GroupID(1),
+			Department:         DepartmentID(0),
+			Capacity:           2,
+			RegisteredStudents: make(map[StudentID]struct{}),
+			ReserveCapacity:    2,
+			ReserveQueue:       util.NewQueue[StudentID](),
+		}
+		batcher := new(inMemoryBatcher)
+		// Add to registered courses
+		for i := 0; i < course.Capacity; i++ {
+			assertion.NoError(course.ForceEnroll(context.Background(), StudentID(i), batcher))
+		}
+		// Add to main queue again!
+		for i := 0; i < course.ReserveCapacity; i++ {
+			assertion.NoError(course.ForceEnroll(context.Background(), StudentID(course.ReserveCapacity+i), batcher))
+		}
+		// Check batcher
+		assertion.Equal([]struct {
+			data *proto.CourseDatabaseBatchMessage
+			dep  DepartmentID
+		}{
+			{
+				data: &proto.CourseDatabaseBatchMessage{
+					Action: &proto.CourseDatabaseBatchMessage_Enroll{
+						Enroll: &proto.CourseDatabaseBatchEnrollMessage{
+							StudentId: 0,
+							CourseId:  1,
+							GroupId:   1,
+							Reserved:  false,
+						},
+					},
+				},
+				dep: DepartmentID(0),
+			},
+			{
+				data: &proto.CourseDatabaseBatchMessage{
+					Action: &proto.CourseDatabaseBatchMessage_Enroll{
+						Enroll: &proto.CourseDatabaseBatchEnrollMessage{
+							StudentId: 1,
+							CourseId:  1,
+							GroupId:   1,
+							Reserved:  false,
+						},
+					},
+				},
+				dep: DepartmentID(0),
+			},
+			{
+				data: &proto.CourseDatabaseBatchMessage{
+					Action: &proto.CourseDatabaseBatchMessage_UpdateCapacity{
+						UpdateCapacity: &proto.CourseDatabaseBatchUpdateCapacity{
+							CourseId:    1,
+							GroupId:     1,
+							NewCapacity: 3,
+						},
+					},
+				},
+				dep: DepartmentID(0),
+			},
+			{
+				data: &proto.CourseDatabaseBatchMessage{
+					Action: &proto.CourseDatabaseBatchMessage_Enroll{
+						Enroll: &proto.CourseDatabaseBatchEnrollMessage{
+							StudentId: 2,
+							CourseId:  1,
+							GroupId:   1,
+							Reserved:  false,
+						},
+					},
+				},
+				dep: DepartmentID(0),
+			},
+			{
+				data: &proto.CourseDatabaseBatchMessage{
+					Action: &proto.CourseDatabaseBatchMessage_UpdateCapacity{
+						UpdateCapacity: &proto.CourseDatabaseBatchUpdateCapacity{
+							CourseId:    1,
+							GroupId:     1,
+							NewCapacity: 4,
+						},
+					},
+				},
+				dep: DepartmentID(0),
+			},
+			{
+				data: &proto.CourseDatabaseBatchMessage{
+					Action: &proto.CourseDatabaseBatchMessage_Enroll{
+						Enroll: &proto.CourseDatabaseBatchEnrollMessage{
+							StudentId: 3,
+							CourseId:  1,
+							GroupId:   1,
+							Reserved:  false,
+						},
+					},
+				},
+				dep: DepartmentID(0),
+			},
+		}, batcher.messages)
+	})
+	t.Run("error batcher test", func(t *testing.T) {
+		assertion := assert.New(t)
+		course := Course{
+			ID:                 CourseID(1),
+			GroupID:            GroupID(1),
+			Department:         DepartmentID(0),
+			Capacity:           2,
+			RegisteredStudents: make(map[StudentID]struct{}),
+			ReserveCapacity:    2,
+			ReserveQueue:       util.NewQueue[StudentID](),
+		}
+		innerError := errors.New("error")
+		batcher := errorBatcher{err: innerError}
+		assertion.ErrorIs(course.ForceEnroll(context.Background(), StudentID(0), batcher), BatchError{innerError})
+		assertion.Empty(course.RegisteredStudents)
+	})
+	t.Run("nil batcher test", func(t *testing.T) {
+		course := Course{
+			Capacity:           2,
+			RegisteredStudents: make(map[StudentID]struct{}),
+			ReserveCapacity:    2,
+			ReserveQueue:       util.NewQueue[StudentID](),
+		}
+		assert.PanicsWithValue(t, "nil batcher", func() {
+			_ = course.ForceEnroll(context.Background(), StudentID(0), nil)
+		})
 	})
 }

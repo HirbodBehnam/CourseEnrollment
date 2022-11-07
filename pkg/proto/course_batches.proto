@@ -9,6 +9,7 @@ message CourseDatabaseBatchMessage {
     CourseDatabaseBatchEnrollMessage enroll = 1;
     CourseDatabaseBatchDisenrollMessage disenroll = 2;
     CourseDatabaseBatchChangeGroupMessage change_group = 3;
+    CourseDatabaseBatchUpdateCapacity update_capacity = 4;
   }
 }
 
@@ -39,4 +40,13 @@ message CourseDatabaseBatchChangeGroupMessage {
   uint32 group_id = 3;
   // True if user is in reserved queue
   bool reserved = 4;
+}
+
+message CourseDatabaseBatchUpdateCapacity {
+  // The course ID to change its capacity
+  int32 course_id = 1;
+  // The group ID of the course to change its capacity
+  uint32 group_id = 2;
+  // The new capacity of this course
+  int32 new_capacity = 3;
 }

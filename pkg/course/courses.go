@@ -121,6 +121,7 @@ func (c *Course) threadUnsafeEnrollStudent(ctx context.Context, studentID Studen
 						StudentId: uint64(studentID),
 						CourseId:  int32(c.ID),
 						GroupId:   uint32(c.GroupID),
+						Reserved:  len(c.RegisteredStudents) == c.Capacity,
 					},
 				},
 			})
@@ -250,6 +251,57 @@ func (c *Course) ChangeGroupOfStudent(ctx context.Context, studentID StudentID, 
 	// Now remove the user from this course
 	_ = c.threadUnsafeDisenrollStudent(ctx, studentID, nil) // no error because no batcher
 	return true, nil
+}
+
+// ForceEnroll will forcibly enroll a student in this course.
+// If this course had free space it will register the user directly in it.
+// Otherwise, it will add capacity to course and then add the student
+func (c *Course) ForceEnroll(ctx context.Context, studentID StudentID, batcher Batcher) error {
+	if batcher == nil {
+		panic("nil batcher")
+	}
+	// Lock the course and unlock it when we are leaving
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	// Check the capacity
+	if len(c.RegisteredStudents) == c.Capacity {
+		// Update capacity
+		err := batcher.ProcessDatabaseQuery(
+			ctx,
+			c.Department,
+			&proto.CourseDatabaseBatchMessage{
+				Action: &proto.CourseDatabaseBatchMessage_UpdateCapacity{
+					UpdateCapacity: &proto.CourseDatabaseBatchUpdateCapacity{
+						CourseId:    int32(c.ID),
+						GroupId:     uint32(c.GroupID),
+						NewCapacity: int32(c.Capacity + 1),
+					},
+				},
+			})
+		if err != nil {
+			return BatchError{err}
+		}
+		c.Capacity++
+	}
+	// Register user
+	err := batcher.ProcessDatabaseQuery(ctx,
+		c.Department,
+		&proto.CourseDatabaseBatchMessage{
+			Action: &proto.CourseDatabaseBatchMessage_Enroll{
+				Enroll: &proto.CourseDatabaseBatchEnrollMessage{
+					StudentId: uint64(studentID),
+					CourseId:  int32(c.ID),
+					GroupId:   uint32(c.GroupID),
+					Reserved:  false,
+				},
+			},
+		})
+	if err != nil {
+		return BatchError{err}
+	}
+	// Add user
+	c.RegisteredStudents[studentID] = struct{}{}
+	return nil
 }
 
 // threadUnsafeCanBeEnrolled checks if one student can enroll in a course.

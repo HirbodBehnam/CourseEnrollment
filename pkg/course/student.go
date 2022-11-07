@@ -105,7 +105,7 @@ func (s *Student) DisenrollCourse(ctx context.Context, courses *Courses, courseI
 	if !s.IsEnrollTimeOK() {
 		return NotEnrollmentTimeErr
 	}
-	// Lock the user to do stuff with they
+	// Lock the user to do stuff with them
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	// Check the actions
@@ -139,7 +139,7 @@ func (s *Student) ChangeGroup(ctx context.Context, courses *Courses, courseID Co
 	if !s.IsEnrollTimeOK() {
 		return NotEnrollmentTimeErr
 	}
-	// Lock the user to do stuff with they
+	// Lock the user to do stuff with them
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	// Check the actions
@@ -201,6 +201,33 @@ func (s *Student) ChangeGroup(ctx context.Context, courses *Courses, courseID Co
 	// Done!
 	s.RemainingActions--
 	s.RegisteredCourses[courseID] = destinationGroupID
+	return nil
+}
+
+// ForceEnrollCourse will forcibly enroll the student in a course.
+// This will add capacity to course if needed.
+// This function will return error if user is already registered in the course
+func (s *Student) ForceEnrollCourse(ctx context.Context, courses *Courses, courseID CourseID, groupID GroupID, batcher Batcher) error {
+	// We get the course which is basically lock-free. (we are all reading from this map)
+	course := courses.GetCourse(courseID, groupID)
+	if course == nil {
+		return NotExistsErr
+	}
+	// Lock the user to do stuff with them
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	// Check if user has already registered in this course
+	if _, alreadyRegistered := s.RegisteredCourses[courseID]; alreadyRegistered {
+		return AlreadyRegisteredErr
+	}
+	// Register in course
+	err := course.ForceEnroll(ctx, s.ID, batcher)
+	if err != nil {
+		return err
+	}
+	// Update values
+	s.RegisteredCourses[courseID] = groupID
+	s.RegisteredUnits += course.Units
 	return nil
 }
 
