@@ -40,3 +40,12 @@ type CourseEnrollmentRequest struct {
 	// On change group this is the destination group ID.
 	GroupID course.GroupID `json:"group_id" binding:"required"`
 }
+
+// StaffCourseEnrollmentRequest is sent when a staff want's to do something with
+// courses of a student. For example force enroll or force disenroll.
+type StaffCourseEnrollmentRequest struct {
+	// The typical fields are available
+	CourseEnrollmentRequest
+	// Staffs must say the student which they want to do the action on
+	StudentID course.StudentID `json:"std_id" binding:"required"`
+}

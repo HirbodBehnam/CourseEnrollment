@@ -85,3 +85,15 @@ func ParseEnrollmentBody() gin.HandlerFunc {
 		c.Set(requestKey, request)
 	}
 }
+
+// ParseStaffEnrollmentBody will parse the body of a request into StaffCourseEnrollmentRequest
+func ParseStaffEnrollmentBody() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var request StaffCourseEnrollmentRequest
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{reasonKey: err.Error()})
+			return
+		}
+		c.Set(requestKey, request)
+	}
+}

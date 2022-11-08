@@ -12,7 +12,13 @@ import (
 // It adds capacity to course if needed. The only possible way for this endpoint
 // to fail is that user has this course already.
 func (a *API) ForceEnroll(c *gin.Context) {
-	// TODO
+	request := c.MustGet(requestKey).(StaffCourseEnrollmentRequest)
+	_, err := a.CoreClient.ForceEnroll(c.Request.Context(), &proto.StudentEnrollRequest{
+		StudentId: uint64(request.StudentID),
+		CourseId:  int32(request.CourseID),
+		GroupId:   uint32(request.GroupID),
+	})
+	handleEnrollmentRPCError(c, err)
 }
 
 // ForceDisenroll will simply disenroll a student from course.
@@ -42,5 +48,22 @@ func (a *API) CoursesOfStudent(c *gin.Context) {
 
 // StudentsOfCourse gets all the students enrolled in a course.
 func (a *API) StudentsOfCourse(c *gin.Context) {
-	// TODO
+	// Parse request
+	var request CourseEnrollmentRequest
+	if err := c.ShouldBindQuery(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{reasonKey: err.Error()})
+		return
+	}
+	// Get students
+	result, err := a.CoreClient.GetStudentsInCourse(c.Request.Context(), &proto.StudentsOfCourseRequest{
+		CourseId: int32(request.CourseID),
+		GroupId:  uint32(request.GroupID),
+	})
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		log.WithError(err).WithField("data", request).Error("cannot get enrolled students in course")
+		return
+	}
+	// Send result
+	c.JSON(http.StatusOK, result)
 }
