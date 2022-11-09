@@ -24,7 +24,12 @@ func (a *API) ForceEnroll(c *gin.Context) {
 // ForceDisenroll will simply disenroll a student from course.
 // It fails if student is not enrolled in the course.
 func (a *API) ForceDisenroll(c *gin.Context) {
-	// TODO
+	request := c.MustGet(requestKey).(StaffCourseEnrollmentRequest)
+	_, err := a.CoreClient.ForceDisenroll(c.Request.Context(), &proto.StudentDisenrollRequest{
+		StudentId: uint64(request.StudentID),
+		CourseId:  int32(request.CourseID),
+	})
+	handleEnrollmentRPCError(c, err)
 }
 
 // CoursesOfStudent gets the list of courses which user is enrolled in

@@ -99,7 +99,7 @@ func (s *Student) EnrollCourse(ctx context.Context, courses *Courses, courseID C
 	return nil
 }
 
-// DisenrollCourse will remove student from a course from
+// DisenrollCourse will remove student from a course
 func (s *Student) DisenrollCourse(ctx context.Context, courses *Courses, courseID CourseID, batcher Batcher) error {
 	// We check the start time at very first
 	if !s.IsEnrollTimeOK() {
@@ -228,6 +228,33 @@ func (s *Student) ForceEnrollCourse(ctx context.Context, courses *Courses, cours
 	// Update values
 	s.RegisteredCourses[courseID] = groupID
 	s.RegisteredUnits += course.Units
+	return nil
+}
+
+// ForceDisenrollCourse will forcibly remove student from a course.
+// This function does not check for registration time nor remaining actions.
+// It also does not update the remaining actions of user.
+func (s *Student) ForceDisenrollCourse(ctx context.Context, courses *Courses, courseID CourseID, batcher Batcher) error {
+	// Lock the user to do stuff with them
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	// Get the course
+	groupID, exists := s.RegisteredCourses[courseID]
+	if !exists {
+		return NotExistsErr
+	}
+	course := courses.GetCourse(courseID, groupID)
+	if course == nil {
+		panic(fmt.Sprintf("invalid registered lesson %d-%d for user %d", courseID, groupID, s.ID))
+	}
+	// Disenroll
+	err := course.DisenrollStudent(ctx, s.ID, batcher)
+	if err != nil {
+		return err
+	}
+	// Remove from map
+	delete(s.RegisteredCourses, courseID)
+	s.RegisteredUnits -= course.Units
 	return nil
 }
 
