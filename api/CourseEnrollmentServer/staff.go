@@ -66,3 +66,26 @@ func (api *API) ForceDisenroll(ctx context.Context, req *proto.StudentDisenrollR
 	// Done
 	return new(emptypb.Empty), nil
 }
+
+// ChangeCapacity will update a course's capacity. It can fail if we try to shrink the capacity
+// while users are registered in course.
+func (api *API) ChangeCapacity(ctx context.Context, req *proto.ChangeCourseCapacityRequest) (*emptypb.Empty, error) {
+	// Get the course
+	c := api.Courses.GetCourse(course.CourseID(req.CourseId), course.GroupID(req.CourseId))
+	if c == nil {
+		return nil, status.Error(codes.NotFound, "course")
+	}
+	// Update capacity
+	err := c.UpdateCapacity(ctx, int(req.NewCapacity), api.Broker)
+	if err != nil {
+		if batchError, ok := err.(course.BatchError); ok {
+			err = status.Error(codes.Internal, "")
+			log.WithError(batchError).Error("cannot batch data")
+		} else {
+			err = status.Error(codes.FailedPrecondition, err.Error())
+		}
+		return nil, err
+	}
+	// Done
+	return new(emptypb.Empty), nil
+}

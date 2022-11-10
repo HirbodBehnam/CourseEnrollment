@@ -401,3 +401,39 @@ func (c *Course) ToStudentsOfCourseResponseProto() *proto.StudentsOfCourseRespon
 	c.mu.RUnlock()
 	return result
 }
+
+// UpdateCapacity will update the courses
+func (c *Course) UpdateCapacity(ctx context.Context, newCapacity int, batcher Batcher) error {
+	// Lock to update the course
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	// Check if new capacity is less than registered amount
+	if len(c.RegisteredStudents) > newCapacity {
+		return LowerCapacityThanRegistered
+	}
+	// Batch it
+	err := batcher.ProcessDatabaseQuery(
+		ctx,
+		c.Department,
+		&proto.CourseDatabaseBatchMessage{
+			Action: &proto.CourseDatabaseBatchMessage_UpdateCapacity{
+				UpdateCapacity: &proto.CourseDatabaseBatchUpdateCapacity{
+					CourseId:    int32(c.ID),
+					GroupId:     uint32(c.GroupID),
+					NewCapacity: int32(newCapacity),
+				},
+			},
+		})
+	if err != nil {
+		return BatchError{err}
+	}
+	// Remove from queue and add to main registered users.
+	// We must add to registered users for Min(capacity difference, reserve queue len) times.
+	for i := util.Min(newCapacity-c.Capacity, c.ReserveQueue.Len()); i > 0; i-- {
+		c.RegisteredStudents[c.ReserveQueue.Dequeue()] = struct{}{}
+	}
+	// Update the capacity
+	c.Capacity = newCapacity
+	// Done
+	return nil
+}

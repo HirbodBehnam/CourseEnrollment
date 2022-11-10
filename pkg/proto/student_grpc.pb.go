@@ -39,6 +39,9 @@ type CourseEnrollmentServerServiceClient interface {
 	ForceEnroll(ctx context.Context, in *StudentEnrollRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// This endpoint must forcibly dis-enroll a user from a course.
 	ForceDisenroll(ctx context.Context, in *StudentDisenrollRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// This endpoint will change the capacity of a course if possible. It is not possible
+	// to change the capacity if the new capacity if less than the registered users.
+	ChangeCapacity(ctx context.Context, in *ChangeCourseCapacityRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type courseEnrollmentServerServiceClient struct {
@@ -121,6 +124,15 @@ func (c *courseEnrollmentServerServiceClient) ForceDisenroll(ctx context.Context
 	return out, nil
 }
 
+func (c *courseEnrollmentServerServiceClient) ChangeCapacity(ctx context.Context, in *ChangeCourseCapacityRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/proto.CourseEnrollmentServerService/ChangeCapacity", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CourseEnrollmentServerServiceServer is the server API for CourseEnrollmentServerService service.
 // All implementations must embed UnimplementedCourseEnrollmentServerServiceServer
 // for forward compatibility
@@ -141,6 +153,9 @@ type CourseEnrollmentServerServiceServer interface {
 	ForceEnroll(context.Context, *StudentEnrollRequest) (*emptypb.Empty, error)
 	// This endpoint must forcibly dis-enroll a user from a course.
 	ForceDisenroll(context.Context, *StudentDisenrollRequest) (*emptypb.Empty, error)
+	// This endpoint will change the capacity of a course if possible. It is not possible
+	// to change the capacity if the new capacity if less than the registered users.
+	ChangeCapacity(context.Context, *ChangeCourseCapacityRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedCourseEnrollmentServerServiceServer()
 }
 
@@ -164,13 +179,16 @@ func (UnimplementedCourseEnrollmentServerServiceServer) GetCoursesOfDepartment(c
 	return nil, status.Errorf(codes.Unimplemented, "method GetCoursesOfDepartment not implemented")
 }
 func (UnimplementedCourseEnrollmentServerServiceServer) GetStudentsInCourse(context.Context, *StudentsOfCourseRequest) (*StudentsOfCourseResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetStudentsInCourse not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method GetStudethis will ntsInCourse not implemented")
 }
 func (UnimplementedCourseEnrollmentServerServiceServer) ForceEnroll(context.Context, *StudentEnrollRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ForceEnroll not implemented")
 }
 func (UnimplementedCourseEnrollmentServerServiceServer) ForceDisenroll(context.Context, *StudentDisenrollRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ForceDisenroll not implemented")
+}
+func (UnimplementedCourseEnrollmentServerServiceServer) ChangeCapacity(context.Context, *ChangeCourseCapacityRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChangeCapacity not implemented")
 }
 func (UnimplementedCourseEnrollmentServerServiceServer) mustEmbedUnimplementedCourseEnrollmentServerServiceServer() {
 }
@@ -330,6 +348,24 @@ func _CourseEnrollmentServerService_ForceDisenroll_Handler(srv interface{}, ctx 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CourseEnrollmentServerService_ChangeCapacity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangeCourseCapacityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CourseEnrollmentServerServiceServer).ChangeCapacity(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.CourseEnrollmentServerService/ChangeCapacity",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CourseEnrollmentServerServiceServer).ChangeCapacity(ctx, req.(*ChangeCourseCapacityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CourseEnrollmentServerService_ServiceDesc is the grpc.ServiceDesc for CourseEnrollmentServerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -368,6 +404,10 @@ var CourseEnrollmentServerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ForceDisenroll",
 			Handler:    _CourseEnrollmentServerService_ForceDisenroll_Handler,
+		},
+		{
+			MethodName: "ChangeCapacity",
+			Handler:    _CourseEnrollmentServerService_ChangeCapacity_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

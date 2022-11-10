@@ -49,3 +49,11 @@ type StaffCourseEnrollmentRequest struct {
 	// Staffs must say the student which they want to do the action on
 	StudentID course.StudentID `form:"std_id" json:"std_id" binding:"required"`
 }
+
+// ChangeCapacityStudent is the request which is sent to change the capacity of a course
+type ChangeCapacityStudent struct {
+	// The typical fields are available
+	CourseEnrollmentRequest
+	// The new capacity
+	NewCapacity int `form:"capacity" json:"capacity" binding:"required"`
+}

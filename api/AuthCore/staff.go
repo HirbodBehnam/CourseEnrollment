@@ -80,3 +80,21 @@ func (a *API) StudentsOfCourse(c *gin.Context) {
 	// Send result
 	c.JSON(http.StatusOK, result)
 }
+
+// UpdateCourseCapacity will update a course's capacity. It can fail if we try to shrink the capacity
+// while users are registered in course.
+func (a *API) UpdateCourseCapacity(c *gin.Context) {
+	// Parse request
+	var request ChangeCapacityStudent
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{reasonKey: err.Error()})
+		return
+	}
+	// Do the request
+	_, err := a.CoreClient.ChangeCapacity(c.Request.Context(), &proto.ChangeCourseCapacityRequest{
+		CourseId:    int32(request.CourseID),
+		GroupId:     uint32(int32(request.GroupID)),
+		NewCapacity: int32(request.NewCapacity),
+	})
+	handleEnrollmentRPCError(c, err)
+}

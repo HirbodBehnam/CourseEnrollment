@@ -36,6 +36,7 @@ func (db Database) ChangeCourseGroup(stdID course.StudentID, courseID course.Cou
 
 // UpdateCapacity will update the capacity of a course
 func (db Database) UpdateCapacity(courseID course.CourseID, groupID course.GroupID, newCapacity int32) error {
+	// TODO: update the reserved status of users
 	_, err := db.db.Exec(context.Background(), "UPDATE courses SET capacity=$1 WHERE course_id=$2 AND group_id=$3", newCapacity, courseID, groupID)
 	return err
 }

@@ -52,3 +52,7 @@ var NoRemainingActionsErr = errors.New("no more remaining actions left")
 
 // PlayedYourselfErr happens when user tries to change group to its own registered group
 var PlayedYourselfErr = errors.New("source and destination group ID is same")
+
+// LowerCapacityThanRegistered means that the new capacity which admin wants is less than the
+// registered count of the course. This cannot be applied because we need to remove users from course.
+var LowerCapacityThanRegistered = errors.New("new capacity cannot be less than registered count")

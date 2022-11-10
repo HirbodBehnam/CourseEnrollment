@@ -43,8 +43,9 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
+	golang.org/x/exp v0.0.0-20221109205753-fc8884afc316 // indirect
 	golang.org/x/net v0.0.0-20220920152717-4a395b0a80a1 // indirect
-	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8 // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20220920164045-a2a065f3c118 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

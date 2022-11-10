@@ -47,6 +47,7 @@ func main() {
 	staffRouter.DELETE("/force-std", endpointApi.ForceDisenroll)
 	staffRouter.GET("/student-courses", endpointApi.CoursesOfStudent)
 	staffRouter.GET("/course-students", endpointApi.StudentsOfCourse)
+	staffRouter.PATCH("/capacity", endpointApi.UpdateCourseCapacity)
 	// Listen
 	srv := &http.Server{
 		Handler: r,

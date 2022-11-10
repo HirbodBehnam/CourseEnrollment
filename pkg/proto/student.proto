@@ -26,6 +26,9 @@ service CourseEnrollmentServerService {
   rpc ForceEnroll (StudentEnrollRequest) returns (google.protobuf.Empty);
   // This endpoint must forcibly dis-enroll a user from a course.
   rpc ForceDisenroll (StudentDisenrollRequest) returns (google.protobuf.Empty);
+  // This endpoint will change the capacity of a course if possible. It is not possible
+  // to change the capacity if the new capacity if less than the registered users.
+  rpc ChangeCapacity (ChangeCourseCapacityRequest) returns (google.protobuf.Empty);
 }
 
 // The request to enroll a student in a course
@@ -103,4 +106,11 @@ message StudentsOfCourseResponse {
   // The reserve queue with order. First student is the first one which goes into registered
   // users if anyone dis-enrolls from course.
   repeated uint64 reserved_queue_students = 2;
+}
+
+// The request to enroll a student in a course
+message ChangeCourseCapacityRequest {
+  int32 course_id = 1;
+  uint32 group_id = 2;
+  int32 new_capacity = 3;
 }
