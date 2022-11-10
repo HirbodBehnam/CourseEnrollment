@@ -11,6 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -48,11 +49,10 @@ func main() {
 	staffRouter.GET("/course-students", endpointApi.StudentsOfCourse)
 	// Listen
 	srv := &http.Server{
-		Addr:    os.Getenv("LISTEN_ADDRESS"),
 		Handler: r,
 	}
 	go func() {
-		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := srv.Serve(getListener()); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("listen: %s", err)
 		}
 	}()
@@ -93,4 +93,19 @@ func setupGRPCClient() (pb.CourseEnrollmentServerServiceClient, func()) {
 	return pb.NewCourseEnrollmentServerServiceClient(conn), func() {
 		_ = conn.Close()
 	}
+}
+
+// getListener will start a listener based on environment variables
+func getListener() net.Listener {
+	// Get protocol
+	protocol := "tcp"
+	if envProtocol := os.Getenv("LISTEN_PROTOCOL"); envProtocol != "" {
+		protocol = envProtocol
+	}
+	// Listen
+	listener, err := net.Listen(protocol, os.Getenv("LISTEN_ADDRESS"))
+	if err != nil {
+		log.Fatalf("cannot listen: %s", err)
+	}
+	return listener
 }

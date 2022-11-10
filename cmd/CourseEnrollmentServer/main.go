@@ -24,17 +24,12 @@ func main() {
 	var closeBroker func()
 	apiData.Broker, closeBroker = setupMessageBroker()
 	defer closeBroker()
-	// Create the listener
-	listener, err := net.Listen("tcp", os.Getenv("LISTEN_ADDRESS"))
-	if err != nil {
-		log.Fatalf("failed to listen: %s", err)
-	}
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
 	proto.RegisterCourseEnrollmentServerServiceServer(grpcServer, apiData)
 	go func() {
-		if err := grpcServer.Serve(listener); err != nil {
-			log.Fatalf("Cannot listen: %s", err)
+		if err := grpcServer.Serve(getListener()); err != nil {
+			log.Fatalf("Cannot serve: %s", err)
 		}
 	}()
 	quit := make(chan os.Signal, 1)
@@ -89,4 +84,19 @@ func setupMessageBroker() (course.Batcher, func()) {
 	return mq, func() {
 		_ = mq.Close()
 	}
+}
+
+// getListener will start a listener based on environment variables
+func getListener() net.Listener {
+	// Get protocol
+	protocol := "tcp"
+	if envProtocol := os.Getenv("LISTEN_PROTOCOL"); envProtocol != "" {
+		protocol = envProtocol
+	}
+	// Listen
+	listener, err := net.Listen(protocol, os.Getenv("LISTEN_ADDRESS"))
+	if err != nil {
+		log.Fatalf("cannot listen: %s\n", err)
+	}
+	return listener
 }
