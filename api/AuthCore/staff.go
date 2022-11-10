@@ -12,7 +12,11 @@ import (
 // It adds capacity to course if needed. The only possible way for this endpoint
 // to fail is that user has this course already.
 func (a *API) ForceEnroll(c *gin.Context) {
-	request := c.MustGet(requestKey).(StaffCourseEnrollmentRequest)
+	var request StaffCourseEnrollmentRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{reasonKey: err.Error()})
+		return
+	}
 	_, err := a.CoreClient.ForceEnroll(c.Request.Context(), &proto.StudentEnrollRequest{
 		StudentId: uint64(request.StudentID),
 		CourseId:  int32(request.CourseID),
@@ -24,7 +28,11 @@ func (a *API) ForceEnroll(c *gin.Context) {
 // ForceDisenroll will simply disenroll a student from course.
 // It fails if student is not enrolled in the course.
 func (a *API) ForceDisenroll(c *gin.Context) {
-	request := c.MustGet(requestKey).(StaffCourseEnrollmentRequest)
+	var request StaffCourseEnrollmentRequest
+	if err := c.ShouldBindQuery(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{reasonKey: err.Error()})
+		return
+	}
 	_, err := a.CoreClient.ForceDisenroll(c.Request.Context(), &proto.StudentDisenrollRequest{
 		StudentId: uint64(request.StudentID),
 		CourseId:  int32(request.CourseID),

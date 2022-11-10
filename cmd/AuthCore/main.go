@@ -42,8 +42,8 @@ func main() {
 	studentRouter.GET("/courses", endpointApi.CoursesOfDepartment)
 	// Admin endpoints
 	staffRouter := r.Group("/staff", endpointApi.JWTAuthMiddleware(), api.StaffOnly())
-	staffRouter.PUT("/force-std", api.ParseStaffEnrollmentBody(), endpointApi.ForceEnroll)
-	staffRouter.DELETE("/force-std", api.ParseStaffEnrollmentBody(), endpointApi.ForceDisenroll)
+	staffRouter.PUT("/force-std", endpointApi.ForceEnroll)
+	staffRouter.DELETE("/force-std", endpointApi.ForceDisenroll)
 	staffRouter.GET("/student-courses", endpointApi.CoursesOfStudent)
 	staffRouter.GET("/course-students", endpointApi.StudentsOfCourse)
 	// Listen

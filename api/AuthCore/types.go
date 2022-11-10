@@ -35,10 +35,10 @@ type TokenResult struct {
 // CourseEnrollmentRequest is the data which must be sent to us when
 // a student wants to do anything with their courses except disenrolling.
 type CourseEnrollmentRequest struct {
-	CourseID course.CourseID `json:"course_id" binding:"required"`
+	CourseID course.CourseID `form:"course_id" json:"course_id" binding:"required"`
 	// On enrollment this is the group which user wants to enroll in.
 	// On change group this is the destination group ID.
-	GroupID course.GroupID `json:"group_id" binding:"required"`
+	GroupID course.GroupID `form:"group_id" json:"group_id" binding:"required"`
 }
 
 // StaffCourseEnrollmentRequest is sent when a staff want's to do something with
@@ -47,5 +47,5 @@ type StaffCourseEnrollmentRequest struct {
 	// The typical fields are available
 	CourseEnrollmentRequest
 	// Staffs must say the student which they want to do the action on
-	StudentID course.StudentID `json:"std_id" binding:"required"`
+	StudentID course.StudentID `form:"std_id" json:"std_id" binding:"required"`
 }
