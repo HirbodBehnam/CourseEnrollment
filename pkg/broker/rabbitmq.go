@@ -5,9 +5,9 @@ import (
 	"CourseEnrollment/pkg/proto"
 	"context"
 	"github.com/go-faster/errors"
-	protobuf "github.com/golang/protobuf/proto"
 	amqp "github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
+	protobuf "google.golang.org/protobuf/proto"
 )
 
 // RabbitMQBroker instantiates a RabbitMQ broker for general use
