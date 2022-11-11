@@ -404,12 +404,27 @@ func (c *Course) ToStudentsOfCourseResponseProto() *proto.StudentsOfCourseRespon
 
 // UpdateCapacity will update the courses
 func (c *Course) UpdateCapacity(ctx context.Context, newCapacity int, batcher Batcher) error {
+	if batcher == nil {
+		panic("nil batcher")
+	}
 	// Lock to update the course
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	// Check if new capacity is less than registered amount
 	if len(c.RegisteredStudents) > newCapacity {
 		return LowerCapacityThanRegistered
+	}
+	// Check if new capacity is old capacity
+	if c.Capacity == newCapacity {
+		return nil // do nothing
+	}
+	// Get the users which are going to be moved from reserve queue to main registered users.
+	// We must add to registered users for Min(capacity difference, reserve queue len) times.
+	// We also get the max with 0 to avoid panics when we are reducing the capacity.
+	reservedMovedUsers := c.ReserveQueue.CopyAsArray()[:util.Max(util.Min(newCapacity-c.Capacity, c.ReserveQueue.Len()), 0)]
+	reservedMovedUsersUint := make([]uint64, len(reservedMovedUsers))
+	for i, v := range reservedMovedUsers {
+		reservedMovedUsersUint[i] = uint64(v)
 	}
 	// Batch it
 	err := batcher.ProcessDatabaseQuery(
@@ -418,9 +433,10 @@ func (c *Course) UpdateCapacity(ctx context.Context, newCapacity int, batcher Ba
 		&proto.CourseDatabaseBatchMessage{
 			Action: &proto.CourseDatabaseBatchMessage_UpdateCapacity{
 				UpdateCapacity: &proto.CourseDatabaseBatchUpdateCapacity{
-					CourseId:    int32(c.ID),
-					GroupId:     uint32(c.GroupID),
-					NewCapacity: int32(newCapacity),
+					CourseId:      int32(c.ID),
+					GroupId:       uint32(c.GroupID),
+					NewCapacity:   int32(newCapacity),
+					MovedStudents: reservedMovedUsersUint,
 				},
 			},
 		})
@@ -428,8 +444,7 @@ func (c *Course) UpdateCapacity(ctx context.Context, newCapacity int, batcher Ba
 		return BatchError{err}
 	}
 	// Remove from queue and add to main registered users.
-	// We must add to registered users for Min(capacity difference, reserve queue len) times.
-	for i := util.Min(newCapacity-c.Capacity, c.ReserveQueue.Len()); i > 0; i-- {
+	for i := len(reservedMovedUsers); i > 0; i-- {
 		c.RegisteredStudents[c.ReserveQueue.Dequeue()] = struct{}{}
 	}
 	// Update the capacity

@@ -49,4 +49,6 @@ message CourseDatabaseBatchUpdateCapacity {
   uint32 group_id = 2;
   // The new capacity of this course
   int32 new_capacity = 3;
+  // Users which are moved from reserve queue to main registered users
+  repeated uint64 moved_students = 4;
 }

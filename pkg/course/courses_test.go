@@ -554,3 +554,250 @@ func TestCourseForceEnrollStudent(t *testing.T) {
 		})
 	})
 }
+
+func TestCourseUpdateCapacity(t *testing.T) {
+	t.Run("general test", func(t *testing.T) {
+		t.Run("simple test", func(t *testing.T) {
+			assertion := assert.New(t)
+			course := Course{
+				ID:                 CourseID(1),
+				GroupID:            GroupID(2),
+				Capacity:           2,
+				RegisteredStudents: make(map[StudentID]struct{}),
+				ReserveCapacity:    2,
+				ReserveQueue:       util.NewQueue[StudentID](),
+			}
+			batcher := new(inMemoryBatcher)
+			assertion.NoError(course.UpdateCapacity(context.Background(), 4, batcher))
+			assertion.Equal(4, course.Capacity)
+			assertion.Equal(2, course.ReserveCapacity)
+			assertion.Equal([]struct {
+				data *proto.CourseDatabaseBatchMessage
+				dep  DepartmentID
+			}{
+				{
+					data: &proto.CourseDatabaseBatchMessage{
+						Action: &proto.CourseDatabaseBatchMessage_UpdateCapacity{
+							UpdateCapacity: &proto.CourseDatabaseBatchUpdateCapacity{
+								CourseId:      1,
+								GroupId:       2,
+								NewCapacity:   4,
+								MovedStudents: []uint64{},
+							},
+						},
+					},
+					dep: DepartmentID(0),
+				},
+			}, batcher.messages)
+		})
+		t.Run("move users", func(t *testing.T) {
+			assertion := assert.New(t)
+			course := Course{
+				ID:                 CourseID(1),
+				GroupID:            GroupID(2),
+				Capacity:           10,
+				RegisteredStudents: make(map[StudentID]struct{}),
+				ReserveCapacity:    10,
+				ReserveQueue:       util.NewQueue[StudentID](),
+			}
+			for i := 0; i < 10; i++ {
+				course.RegisteredStudents[StudentID(i)] = struct{}{}
+				course.ReserveQueue.Enqueue(StudentID(i + 10))
+			}
+			batcher := new(inMemoryBatcher)
+			assertion.NoError(course.UpdateCapacity(context.Background(), 15, batcher))
+			assertion.Equal(15, course.Capacity)
+			assertion.Equal(10, course.ReserveCapacity)
+			// Check registered users
+			expectedRegisters := make(map[StudentID]struct{}, 15)
+			for i := 0; i < 15; i++ {
+				expectedRegisters[StudentID(i)] = struct{}{}
+			}
+			assertion.Equal(expectedRegisters, course.RegisteredStudents)
+			expectedQueue := make([]StudentID, 5)
+			for i := 0; i < 5; i++ {
+				expectedQueue[i] = StudentID(i + 15)
+			}
+			assertion.Equal(expectedQueue, course.ReserveQueue.CopyAsArray())
+			// Check batcher
+			assertion.Equal([]struct {
+				data *proto.CourseDatabaseBatchMessage
+				dep  DepartmentID
+			}{
+				{
+					data: &proto.CourseDatabaseBatchMessage{
+						Action: &proto.CourseDatabaseBatchMessage_UpdateCapacity{
+							UpdateCapacity: &proto.CourseDatabaseBatchUpdateCapacity{
+								CourseId:      1,
+								GroupId:       2,
+								NewCapacity:   15,
+								MovedStudents: []uint64{10, 11, 12, 13, 14},
+							},
+						},
+					},
+					dep: DepartmentID(0),
+				},
+			}, batcher.messages)
+		})
+		t.Run("move all users", func(t *testing.T) {
+			assertion := assert.New(t)
+			course := Course{
+				ID:                 CourseID(1),
+				GroupID:            GroupID(2),
+				Capacity:           5,
+				RegisteredStudents: make(map[StudentID]struct{}),
+				ReserveCapacity:    10,
+				ReserveQueue:       util.NewQueue[StudentID](),
+			}
+			for i := 0; i < 5; i++ {
+				course.RegisteredStudents[StudentID(i)] = struct{}{}
+				course.ReserveQueue.Enqueue(StudentID(i + 5))
+			}
+			batcher := new(inMemoryBatcher)
+			assertion.NoError(course.UpdateCapacity(context.Background(), 15, batcher))
+			assertion.Equal(15, course.Capacity)
+			assertion.Equal(10, course.ReserveCapacity)
+			// Check registered users
+			expectedRegisters := make(map[StudentID]struct{}, 10)
+			for i := 0; i < 10; i++ {
+				expectedRegisters[StudentID(i)] = struct{}{}
+			}
+			assertion.Equal(expectedRegisters, course.RegisteredStudents)
+			assertion.Equal(0, course.ReserveQueue.Len())
+			// Check batcher
+			assertion.Equal([]struct {
+				data *proto.CourseDatabaseBatchMessage
+				dep  DepartmentID
+			}{
+				{
+					data: &proto.CourseDatabaseBatchMessage{
+						Action: &proto.CourseDatabaseBatchMessage_UpdateCapacity{
+							UpdateCapacity: &proto.CourseDatabaseBatchUpdateCapacity{
+								CourseId:      1,
+								GroupId:       2,
+								NewCapacity:   15,
+								MovedStudents: []uint64{5, 6, 7, 8, 9},
+							},
+						},
+					},
+					dep: DepartmentID(0),
+				},
+			}, batcher.messages)
+		})
+		t.Run("error", func(t *testing.T) {
+			assertion := assert.New(t)
+			course := Course{
+				ID:                 CourseID(1),
+				GroupID:            GroupID(2),
+				Capacity:           10,
+				RegisteredStudents: make(map[StudentID]struct{}),
+				ReserveCapacity:    10,
+				ReserveQueue:       util.NewQueue[StudentID](),
+			}
+			expectedStudents := make(map[StudentID]struct{}, 10)
+			for i := 0; i < 10; i++ {
+				course.RegisteredStudents[StudentID(i)] = struct{}{}
+				expectedStudents[StudentID(i)] = struct{}{}
+			}
+			batcher := new(inMemoryBatcher)
+			assertion.ErrorIs(course.UpdateCapacity(context.Background(), 5, batcher), LowerCapacityThanRegistered)
+			assertion.Equal(10, course.Capacity)
+			assertion.Equal(10, course.ReserveCapacity)
+			assertion.Equal(expectedStudents, course.RegisteredStudents)
+			assertion.Empty(batcher.messages)
+		})
+		t.Run("same capacity", func(t *testing.T) {
+			assertion := assert.New(t)
+			course := Course{
+				ID:                 CourseID(1),
+				GroupID:            GroupID(2),
+				Capacity:           10,
+				RegisteredStudents: make(map[StudentID]struct{}),
+				ReserveCapacity:    10,
+				ReserveQueue:       util.NewQueue[StudentID](),
+			}
+			expectedStudents := make(map[StudentID]struct{}, 10)
+			expectedQueue := make([]StudentID, 10)
+			for i := 0; i < 10; i++ {
+				course.RegisteredStudents[StudentID(i)] = struct{}{}
+				expectedStudents[StudentID(i)] = struct{}{}
+				course.ReserveQueue.Enqueue(StudentID(i + 10))
+				expectedQueue[i] = StudentID(i + 10)
+			}
+			batcher := new(inMemoryBatcher)
+			assertion.NoError(course.UpdateCapacity(context.Background(), 10, batcher))
+			assertion.Equal(10, course.Capacity)
+			assertion.Equal(10, course.ReserveCapacity)
+			assertion.Equal(expectedStudents, course.RegisteredStudents)
+			assertion.Equal(expectedQueue, course.ReserveQueue.CopyAsArray())
+			assertion.Empty(batcher.messages)
+		})
+		t.Run("reduce capacity", func(t *testing.T) {
+			assertion := assert.New(t)
+			course := Course{
+				ID:                 CourseID(1),
+				GroupID:            GroupID(2),
+				Capacity:           10,
+				RegisteredStudents: make(map[StudentID]struct{}),
+				ReserveCapacity:    10,
+				ReserveQueue:       util.NewQueue[StudentID](),
+			}
+			expectedStudents := make(map[StudentID]struct{}, 10)
+			for i := 0; i < 5; i++ {
+				course.RegisteredStudents[StudentID(i)] = struct{}{}
+				expectedStudents[StudentID(i)] = struct{}{}
+			}
+			batcher := new(inMemoryBatcher)
+			assertion.NoError(course.UpdateCapacity(context.Background(), 5, batcher))
+			assertion.Equal(5, course.Capacity)
+			assertion.Equal(10, course.ReserveCapacity)
+			assertion.Equal(expectedStudents, course.RegisteredStudents)
+			assertion.Equal(0, course.ReserveQueue.Len())
+			assertion.Equal([]struct {
+				data *proto.CourseDatabaseBatchMessage
+				dep  DepartmentID
+			}{
+				{
+					data: &proto.CourseDatabaseBatchMessage{
+						Action: &proto.CourseDatabaseBatchMessage_UpdateCapacity{
+							UpdateCapacity: &proto.CourseDatabaseBatchUpdateCapacity{
+								CourseId:      1,
+								GroupId:       2,
+								NewCapacity:   5,
+								MovedStudents: []uint64{},
+							},
+						},
+					},
+					dep: DepartmentID(0),
+				},
+			}, batcher.messages)
+		})
+	})
+	t.Run("error batcher test", func(t *testing.T) {
+		assertion := assert.New(t)
+		course := Course{
+			ID:                 CourseID(1),
+			GroupID:            GroupID(1),
+			Department:         DepartmentID(0),
+			Capacity:           2,
+			RegisteredStudents: map[StudentID]struct{}{StudentID(1): {}, StudentID(2): {}},
+			ReserveCapacity:    2,
+			ReserveQueue:       util.NewQueue[StudentID](),
+		}
+		innerError := errors.New("error")
+		batcher := errorBatcher{err: innerError}
+		assertion.ErrorIs(course.UpdateCapacity(context.Background(), 5, batcher), BatchError{innerError})
+		assertion.Equal(map[StudentID]struct{}{StudentID(1): {}, StudentID(2): {}}, course.RegisteredStudents)
+	})
+	t.Run("nil batcher test", func(t *testing.T) {
+		course := Course{
+			Capacity:           2,
+			RegisteredStudents: make(map[StudentID]struct{}),
+			ReserveCapacity:    2,
+			ReserveQueue:       util.NewQueue[StudentID](),
+		}
+		assert.PanicsWithValue(t, "nil batcher", func() {
+			_ = course.UpdateCapacity(context.Background(), 10, nil)
+		})
+	})
+}

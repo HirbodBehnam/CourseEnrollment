@@ -179,7 +179,7 @@ func (UnimplementedCourseEnrollmentServerServiceServer) GetCoursesOfDepartment(c
 	return nil, status.Errorf(codes.Unimplemented, "method GetCoursesOfDepartment not implemented")
 }
 func (UnimplementedCourseEnrollmentServerServiceServer) GetStudentsInCourse(context.Context, *StudentsOfCourseRequest) (*StudentsOfCourseResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetStudethis will ntsInCourse not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method GetStudentsInCourse not implemented")
 }
 func (UnimplementedCourseEnrollmentServerServiceServer) ForceEnroll(context.Context, *StudentEnrollRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ForceEnroll not implemented")
