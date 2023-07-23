@@ -1,0 +1,674 @@
+{
+	"info": {
+		"_postman_id": "30d7ee40-eb0d-4e9d-853e-404293763292",
+		"name": "Course Enrollment",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "14537487"
+	},
+	"item": [
+		{
+			"name": "Authorization Requests",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"user\": 1,\r\n    \"password\": \"1234\",\r\n    \"staff\": true\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_CORE}}/login",
+							"host": [
+								"{{AUTH_CORE}}"
+							],
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Login",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"user\": 99171333,\r\n    \"password\": \"1234\",\r\n    \"staff\": false\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{AUTH_CORE}}/login",
+									"host": [
+										"{{AUTH_CORE}}"
+									],
+									"path": [
+										"login"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 13 Oct 2022 17:57:32 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "241"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjZWEiLCJzdWIiOiI5OTE3MTMzMyIsImV4cCI6MTY2NTY4NDQ1MiwibmJmIjoxNjY1NjgzODUyLCJpYXQiOjE2NjU2ODM4NTIsImRlcGFydG1lbnQiOjQwLCJzdGFmZiI6ZmFsc2V9.zudLiODI1Qp_pHD6EbrRmORM4l07GmTi90hAvBbjkbw\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_CORE}}/refresh",
+							"host": [
+								"{{AUTH_CORE}}"
+							],
+							"path": [
+								"refresh"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Refresh Token",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{TOKEN}}",
+										"type": "text",
+										"disabled": true
+									}
+								],
+								"url": {
+									"raw": "{{AUTH_CORE}}/refresh",
+									"host": [
+										"{{AUTH_CORE}}"
+									],
+									"path": [
+										"refresh"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 10 Nov 2022 08:42:01 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "231"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjZWEiLCJzdWIiOiIxIiwiZXhwIjoxNjY4MDczMzIxLCJuYmYiOjE2NjgwNjk3MjEsImlhdCI6MTY2ODA2OTcyMSwiZGVwYXJ0bWVudCI6NDAsInN0YWZmIjp0cnVlfQ.ICXeLRjq1jg0TSp9qvEKaDaPUH63BSWji1o_D2avgPA\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Enrollment",
+			"item": [
+				{
+					"name": "Enroll",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"course_id\": 40103,\r\n    \"group_id\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_CORE}}/student/course",
+							"host": [
+								"{{AUTH_CORE}}"
+							],
+							"path": [
+								"student",
+								"course"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Disenroll",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{AUTH_CORE}}/student/course?course_id=40108",
+							"host": [
+								"{{AUTH_CORE}}"
+							],
+							"path": [
+								"student",
+								"course"
+							],
+							"query": [
+								{
+									"key": "course_id",
+									"value": "40108",
+									"description": "The course ID to disenroll the user from."
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change Group",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"course_id\": 40108,\r\n    \"group_id\": 2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_CORE}}/student/course",
+							"host": [
+								"{{AUTH_CORE}}"
+							],
+							"path": [
+								"student",
+								"course"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get enrolled courses",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{AUTH_CORE}}/student/course",
+							"host": [
+								"{{AUTH_CORE}}"
+							],
+							"path": [
+								"student",
+								"course"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Get enrolled courses",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{AUTH_CORE}}/student/course",
+									"host": [
+										"{{AUTH_CORE}}"
+									],
+									"path": [
+										"student",
+										"course"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 13 Oct 2022 18:44:34 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "204"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"data\": [\n        {\n            \"course\": {\n                \"course_id\": 40103,\n                \"group_id\": 1,\n                \"units\": 1,\n                \"capacity\": 16,\n                \"registered_count\": 1,\n                \"class_time\": [\n                    {\n                        \"day\": 3,\n                        \"start_minute\": 540,\n                        \"end_minute\": 720\n                    }\n                ],\n                \"lecturer\": \"حمید سربازی آزاد\"\n            }\n        }\n    ]\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Staff",
+			"item": [
+				{
+					"name": "Force Enroll Student In Course",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"std_id\": 99171333,\r\n    \"course_id\": 40103,\r\n    \"group_id\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AUTH_CORE}}/staff/force-std",
+							"host": [
+								"{{AUTH_CORE}}"
+							],
+							"path": [
+								"staff",
+								"force-std"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Force Disenroll Student From Course",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{AUTH_CORE}}/staff/force-std?std_id=99171333&course_id=40103&group_id=1",
+							"host": [
+								"{{AUTH_CORE}}"
+							],
+							"path": [
+								"staff",
+								"force-std"
+							],
+							"query": [
+								{
+									"key": "std_id",
+									"value": "99171333",
+									"description": "The student ID to remove the course from."
+								},
+								{
+									"key": "course_id",
+									"value": "40103",
+									"description": "The course ID to remove from student."
+								},
+								{
+									"key": "group_id",
+									"value": "1",
+									"description": "The group of course"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Courses Of Student",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{AUTH_CORE}}/staff/student-courses?std_id=99171333",
+							"host": [
+								"{{AUTH_CORE}}"
+							],
+							"path": [
+								"staff",
+								"student-courses"
+							],
+							"query": [
+								{
+									"key": "std_id",
+									"value": "99171333",
+									"description": "The student ID to get his/her courses."
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Courses Of Student",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{AUTH_CORE}}/staff/student-courses?std_id=99171333",
+									"host": [
+										"{{AUTH_CORE}}"
+									],
+									"path": [
+										"staff",
+										"student-courses"
+									],
+									"query": [
+										{
+											"key": "std_id",
+											"value": "99171333",
+											"description": "The student ID to get his/her courses."
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 13 Oct 2022 18:59:56 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "2"
+								}
+							],
+							"cookie": [],
+							"body": "{\r\n    \"data\": [\r\n        {\r\n            \"course\": {\r\n                \"course_id\": 40103,\r\n                \"group_id\": 1,\r\n                \"units\": 1,\r\n                \"capacity\": 16,\r\n                \"registered_count\": 1,\r\n                \"class_time\": [\r\n                    {\r\n                        \"day\": 3,\r\n                        \"start_minute\": 540,\r\n                        \"end_minute\": 720\r\n                    }\r\n                ],\r\n                \"lecturer\": \"حمید سربازی آزاد\"\r\n            }\r\n        }\r\n    ]\r\n}"
+						}
+					]
+				},
+				{
+					"name": "Students Of Course",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{AUTH_CORE}}/staff/course-students?course_id=40103&group_id=1",
+							"host": [
+								"{{AUTH_CORE}}"
+							],
+							"path": [
+								"staff",
+								"course-students"
+							],
+							"query": [
+								{
+									"key": "course_id",
+									"value": "40103",
+									"description": "The course ID to get the list of student"
+								},
+								{
+									"key": "group_id",
+									"value": "1",
+									"description": "The group of that course"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Students Of Course",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{AUTH_CORE}}/staff/course-students?course_id=40103&group_id=1",
+									"host": [
+										"{{AUTH_CORE}}"
+									],
+									"path": [
+										"staff",
+										"course-students"
+									],
+									"query": [
+										{
+											"key": "course_id",
+											"value": "40103",
+											"description": "The course ID to get the list of student"
+										},
+										{
+											"key": "group_id",
+											"value": "1",
+											"description": "The group of that course"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 10 Nov 2022 08:48:29 GMT"
+								},
+								{
+									"key": "Content-Length",
+									"value": "34"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"registered_students\": [\n        123456\n    ],\n    \"reserved_queue_students\": [\n        654321\n    ]\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Get department courses",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{TOKEN}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{AUTH_CORE}}/student/courses?department=40",
+					"host": [
+						"{{AUTH_CORE}}"
+					],
+					"path": [
+						"student",
+						"courses"
+					],
+					"query": [
+						{
+							"key": "department",
+							"value": "40"
+						}
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Get department courses",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{AUTH_CORE}}/student/courses?department=40",
+							"host": [
+								"{{AUTH_CORE}}"
+							],
+							"path": [
+								"student",
+								"courses"
+							],
+							"query": [
+								{
+									"key": "department",
+									"value": "40"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Date",
+							"value": "Thu, 13 Oct 2022 18:38:42 GMT"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"courses\": [\n        {\n            \"course_id\": 40734,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1674127800,\n            \"class_time\": [\n                {\n                    \"start_minute\": 900,\n                    \"end_minute\": 990\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 900,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"رسول جلیلی\"\n        },\n        {\n            \"course_id\": 40181,\n            \"group_id\": 2,\n            \"units\": 3,\n            \"capacity\": 87,\n            \"exam_time\": 1673328600,\n            \"class_time\": [\n                {\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                }\n            ],\n            \"lecturer\": \"علی شریفی زارچی\"\n        },\n        {\n            \"course_id\": 40181,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 80,\n            \"exam_time\": 1674279000,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1412,\n                    \"end_minute\": 1006\n                }\n            ],\n            \"lecturer\": \"ابوالفضل مطهری\"\n        },\n        {\n            \"course_id\": 40745,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 25,\n            \"exam_time\": 1673415000,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1052,\n                    \"end_minute\": 646\n                }\n            ],\n            \"lecturer\": \"سیدحسن میریان حسین آبادی\"\n        },\n        {\n            \"course_id\": 40685,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1673955000,\n            \"class_time\": [\n                {\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                }\n            ],\n            \"lecturer\": \"محمد علی آبام\"\n        },\n        {\n            \"course_id\": 40384,\n            \"group_id\": 3,\n            \"units\": 3,\n            \"capacity\": 50,\n            \"exam_time\": 1673695800,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 62,\n                    \"end_minute\": 1097\n                }\n            ],\n            \"lecturer\": \"مجتبی ورمزیار\"\n        },\n        {\n            \"course_id\": 40384,\n            \"group_id\": 2,\n            \"units\": 3,\n            \"capacity\": 58,\n            \"exam_time\": 1673523000,\n            \"class_time\": [\n                {\n                    \"start_minute\": 990,\n                    \"end_minute\": 1080\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 990,\n                    \"end_minute\": 1080\n                }\n            ],\n            \"lecturer\": \"مجتبی مصطفوی\"\n        },\n        {\n            \"course_id\": 40384,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 55,\n            \"exam_time\": 1673955000,\n            \"class_time\": [\n                {\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                }\n            ],\n            \"lecturer\": \"مرتضی امینی\"\n        },\n        {\n            \"course_id\": 40559,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1673695800,\n            \"lecturer\": \"علی محمدیان\"\n        },\n        {\n            \"course_id\": 40642,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1674019800,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1322,\n                    \"end_minute\": 916\n                }\n            ],\n            \"lecturer\": \"محمد امین فضلی\"\n        },\n        {\n            \"course_id\": 40844,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1673328600,\n            \"class_time\": [\n                {\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                }\n            ],\n            \"lecturer\": \"محسن انصاری\"\n        },\n        {\n            \"course_id\": 40103,\n            \"group_id\": 4,\n            \"units\": 1,\n            \"capacity\": 15,\n            \"lecturer\": \"حمید سربازی آزاد\"\n        },\n        {\n            \"course_id\": 40103,\n            \"group_id\": 3,\n            \"units\": 1,\n            \"capacity\": 15,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 810,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"حمید سربازی آزاد\"\n        },\n        {\n            \"course_id\": 40103,\n            \"group_id\": 2,\n            \"units\": 1,\n            \"capacity\": 14,\n            \"class_time\": [\n                {\n                    \"day\": 3,\n                    \"start_minute\": 810,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"حمید سربازی آزاد\"\n        },\n        {\n            \"course_id\": 40103,\n            \"group_id\": 1,\n            \"units\": 1,\n            \"capacity\": 16,\n            \"class_time\": [\n                {\n                    \"day\": 3,\n                    \"start_minute\": 540,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"حمید سربازی آزاد\"\n        },\n        {\n            \"course_id\": 40626,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1673263800,\n            \"class_time\": [\n                {\n                    \"start_minute\": 1080,\n                    \"end_minute\": 1170\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 1080,\n                    \"end_minute\": 1170\n                }\n            ],\n            \"lecturer\": \"علی محمد-افشین همت یار\"\n        },\n        {\n            \"course_id\": 40462,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 50,\n            \"exam_time\": 1673523000,\n            \"class_time\": [\n                {\n                    \"start_minute\": 990,\n                    \"end_minute\": 1080\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 990,\n                    \"end_minute\": 1080\n                }\n            ],\n            \"lecturer\": \"محسن انصاری\"\n        },\n        {\n            \"course_id\": 40126,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 65,\n            \"exam_time\": 1673868600,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1142,\n                    \"end_minute\": 736\n                }\n            ],\n            \"lecturer\": \"حمید سربازی آزاد\"\n        },\n        {\n            \"course_id\": 40126,\n            \"group_id\": 2,\n            \"units\": 3,\n            \"capacity\": 75,\n            \"exam_time\": 1673868600,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1142,\n                    \"end_minute\": 736\n                }\n            ],\n            \"lecturer\": \"حسین اسدی\"\n        },\n        {\n            \"course_id\": 40415,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 86,\n            \"exam_time\": 1673328600,\n            \"class_time\": [\n                {\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                }\n            ],\n            \"lecturer\": \"علی موقررحیم آبادی\"\n        },\n        {\n            \"course_id\": 40717,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 45,\n            \"exam_time\": 1673523000,\n            \"class_time\": [\n                {\n                    \"start_minute\": 990,\n                    \"end_minute\": 1080\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 990,\n                    \"end_minute\": 1080\n                }\n            ],\n            \"lecturer\": \"مهدیه سلیمانی باغشاه\"\n        },\n        {\n            \"course_id\": 40717,\n            \"group_id\": 2,\n            \"units\": 3,\n            \"capacity\": 125,\n            \"exam_time\": 1673955000,\n            \"class_time\": [\n                {\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                }\n            ],\n            \"lecturer\": \"بهروز آذرخلیلی، علی شریفی زارچی\"\n        },\n        {\n            \"course_id\": 40632,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1674019800,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1322,\n                    \"end_minute\": 916\n                }\n            ],\n            \"lecturer\": \"علیرضا اجلالی\"\n        },\n        {\n            \"course_id\": 40428,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 50,\n            \"exam_time\": 1673328600,\n            \"class_time\": [\n                {\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                }\n            ],\n            \"lecturer\": \"سیدابراهیم ابطحی\"\n        },\n        {\n            \"course_id\": 40548,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 25,\n            \"exam_time\": 1673328600,\n            \"class_time\": [\n                {\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                }\n            ],\n            \"lecturer\": \"جعفر حبیبی، میثم نظریانی\"\n        },\n        {\n            \"course_id\": 40222,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 50,\n            \"exam_time\": 1673760600,\n            \"class_time\": [\n                {\n                    \"start_minute\": 450,\n                    \"end_minute\": 540\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 450,\n                    \"end_minute\": 540\n                }\n            ],\n            \"lecturer\": \"سیدعباس حسینی\"\n        },\n        {\n            \"course_id\": 40495,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 50,\n            \"exam_time\": 1673955000,\n            \"class_time\": [\n                {\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                }\n            ],\n            \"lecturer\": \"حمیدرضا کلهر\"\n        },\n        {\n            \"course_id\": 40215,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 70,\n            \"exam_time\": 1673263800,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 152,\n                    \"end_minute\": 1187\n                }\n            ],\n            \"lecturer\": \"حمید سربازی آزاد، سمیرا حسین قربان\"\n        },\n        {\n            \"course_id\": 40343,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 50,\n            \"exam_time\": 1673523000,\n            \"class_time\": [\n                {\n                    \"start_minute\": 990,\n                    \"end_minute\": 1080\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 990,\n                    \"end_minute\": 1080\n                }\n            ],\n            \"lecturer\": \"علی محمد-افشین همت یار\"\n        },\n        {\n            \"course_id\": 40853,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1673415000,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1052,\n                    \"end_minute\": 646\n                }\n            ],\n            \"lecturer\": \"حمید سربازی آزاد\"\n        },\n        {\n            \"course_id\": 40677,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1673242200,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 962,\n                    \"end_minute\": 556\n                }\n            ],\n            \"lecturer\": \"احسان الدین عسگری\"\n        },\n        {\n            \"course_id\": 40354,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 70,\n            \"exam_time\": 1674365400,\n            \"class_time\": [\n                {\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"حمید ضرابی زاده\"\n        },\n        {\n            \"course_id\": 40571,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 30,\n            \"exam_time\": 1674127800,\n            \"class_time\": [\n                {\n                    \"start_minute\": 900,\n                    \"end_minute\": 990\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 900,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"محمد حسین رهبان\"\n        },\n        {\n            \"course_id\": 40749,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 25,\n            \"exam_time\": 1673242200,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 962,\n                    \"end_minute\": 556\n                }\n            ],\n            \"lecturer\": \"سیاوش بیات سرمدی\"\n        },\n        {\n            \"course_id\": 40417,\n            \"group_id\": 2,\n            \"units\": 3,\n            \"capacity\": 60,\n            \"exam_time\": 1674127800,\n            \"class_time\": [\n                {\n                    \"start_minute\": 900,\n                    \"end_minute\": 990\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 900,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"مهدیه سلیمانی باغشاه\"\n        },\n        {\n            \"course_id\": 40417,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 80,\n            \"exam_time\": 1674365400,\n            \"class_time\": [\n                {\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"محمد حسین رهبان\"\n        },\n        {\n            \"course_id\": 40552,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1674019800,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1322,\n                    \"end_minute\": 916\n                }\n            ],\n            \"lecturer\": \"ابوالفضل مطهری، محمد هادی فروغمند اعرابی\"\n        },\n        {\n            \"course_id\": 40424,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 86,\n            \"exam_time\": 1673415000,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1052,\n                    \"end_minute\": 646\n                }\n            ],\n            \"lecturer\": \"حسین اسدی\"\n        },\n        {\n            \"course_id\": 40424,\n            \"group_id\": 2,\n            \"units\": 3,\n            \"capacity\": 46,\n            \"exam_time\": 1673695800,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 62,\n                    \"end_minute\": 1097\n                }\n            ],\n            \"lecturer\": \"مهدی دادبخش\"\n        },\n        {\n            \"course_id\": 40124,\n            \"group_id\": 2,\n            \"units\": 3,\n            \"capacity\": 80,\n            \"exam_time\": 1674279000,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1412,\n                    \"end_minute\": 1006\n                }\n            ],\n            \"lecturer\": \"سیاوش بیات\"\n        },\n        {\n            \"course_id\": 40124,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 70,\n            \"exam_time\": 1673955000,\n            \"class_time\": [\n                {\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                }\n            ],\n            \"lecturer\": \"سمیه کوهی\"\n        },\n        {\n            \"course_id\": 40693,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1673328600,\n            \"class_time\": [\n                {\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                }\n            ],\n            \"lecturer\": \"کامبیز میزانیان\"\n        },\n        {\n            \"course_id\": 40724,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1674279000,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1412,\n                    \"end_minute\": 1006\n                }\n            ],\n            \"lecturer\": \"رامان رامسین\"\n        },\n        {\n            \"course_id\": 40628,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1674365400,\n            \"class_time\": [\n                {\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"بردیا صفائی\"\n        },\n        {\n            \"course_id\": 40414,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 40,\n            \"exam_time\": 1673955000,\n            \"class_time\": [\n                {\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                }\n            ],\n            \"lecturer\": \"غلامرضا قاسم ثانی\"\n        },\n        {\n            \"course_id\": 40414,\n            \"group_id\": 2,\n            \"units\": 3,\n            \"capacity\": 41,\n            \"exam_time\": 1673695800,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 62,\n                    \"end_minute\": 1097\n                }\n            ],\n            \"lecturer\": \"سمانه حسینمردی\"\n        },\n        {\n            \"course_id\": 40443,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 50,\n            \"exam_time\": 1674279000,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1412,\n                    \"end_minute\": 1006\n                }\n            ],\n            \"lecturer\": \"مهدی جعفری سیاوشانی\"\n        },\n        {\n            \"course_id\": 40443,\n            \"group_id\": 2,\n            \"units\": 3,\n            \"capacity\": 60,\n            \"exam_time\": 1674127800,\n            \"class_time\": [\n                {\n                    \"start_minute\": 900,\n                    \"end_minute\": 990\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 900,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"کامبیز میزانیان\"\n        },\n        {\n            \"course_id\": 40153,\n            \"group_id\": 7,\n            \"units\": 3,\n            \"capacity\": 60,\n            \"exam_time\": 1673263800,\n            \"class_time\": [\n                {\n                    \"start_minute\": 990,\n                    \"end_minute\": 1080\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 990,\n                    \"end_minute\": 1080\n                }\n            ],\n            \"lecturer\": \"امیراحسان داودی\"\n        },\n        {\n            \"course_id\": 40153,\n            \"group_id\": 10,\n            \"units\": 3,\n            \"capacity\": 11,\n            \"exam_time\": 1673263800,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1322,\n                    \"end_minute\": 916\n                }\n            ],\n            \"lecturer\": \"کامیار مفاخری\"\n        },\n        {\n            \"course_id\": 40153,\n            \"group_id\": 11,\n            \"units\": 3,\n            \"capacity\": 11,\n            \"exam_time\": 1673263800,\n            \"class_time\": [\n                {\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                }\n            ],\n            \"lecturer\": \"احسان رعیت پیشه\"\n        },\n        {\n            \"course_id\": 40153,\n            \"group_id\": 12,\n            \"units\": 3,\n            \"capacity\": 14,\n            \"exam_time\": 1673263800,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1052,\n                    \"end_minute\": 646\n                }\n            ],\n            \"lecturer\": \"علیرضا کدیور\"\n        },\n        {\n            \"course_id\": 40153,\n            \"group_id\": 8,\n            \"units\": 3,\n            \"capacity\": 10,\n            \"exam_time\": 1673263800,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 62,\n                    \"end_minute\": 1097\n                }\n            ],\n            \"lecturer\": \"حمیدرضا صادقی\"\n        },\n        {\n            \"course_id\": 40153,\n            \"group_id\": 2,\n            \"units\": 3,\n            \"capacity\": 7,\n            \"exam_time\": 1673263800,\n            \"class_time\": [\n                {\n                    \"start_minute\": 990,\n                    \"end_minute\": 1080\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 990,\n                    \"end_minute\": 1080\n                }\n            ],\n            \"lecturer\": \"مهدی دادبخش\"\n        },\n        {\n            \"course_id\": 40153,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 19,\n            \"exam_time\": 1673263800,\n            \"class_time\": [\n                {\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                }\n            ],\n            \"lecturer\": \"محمد امین فضلی\"\n        },\n        {\n            \"course_id\": 40153,\n            \"group_id\": 3,\n            \"units\": 3,\n            \"capacity\": 8,\n            \"exam_time\": 1673263800,\n            \"class_time\": [\n                {\n                    \"start_minute\": 990,\n                    \"end_minute\": 1080\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 990,\n                    \"end_minute\": 1080\n                }\n            ],\n            \"lecturer\": \"علی چکاه\"\n        },\n        {\n            \"course_id\": 40153,\n            \"group_id\": 9,\n            \"units\": 3,\n            \"capacity\": 17,\n            \"exam_time\": 1673263800,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 62,\n                    \"end_minute\": 1097\n                }\n            ],\n            \"lecturer\": \"معصومه نفری\"\n        },\n        {\n            \"course_id\": 40153,\n            \"group_id\": 6,\n            \"units\": 3,\n            \"capacity\": 55,\n            \"exam_time\": 1673263800,\n            \"class_time\": [\n                {\n                    \"start_minute\": 990,\n                    \"end_minute\": 1080\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 990,\n                    \"end_minute\": 1080\n                }\n            ],\n            \"lecturer\": \"آریا کوثری\"\n        },\n        {\n            \"course_id\": 40153,\n            \"group_id\": 4,\n            \"units\": 3,\n            \"capacity\": 50,\n            \"exam_time\": 1673263800,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 62,\n                    \"end_minute\": 1097\n                }\n            ],\n            \"lecturer\": \"وحید خدابخشی\"\n        },\n        {\n            \"course_id\": 40695,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1673328600,\n            \"class_time\": [\n                {\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                }\n            ],\n            \"lecturer\": \"حمیدرضا ربیعی\"\n        },\n        {\n            \"course_id\": 40474,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 51,\n            \"exam_time\": 1673242200,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 962,\n                    \"end_minute\": 556\n                }\n            ],\n            \"lecturer\": \"مهران ریواده\"\n        },\n        {\n            \"course_id\": 40474,\n            \"group_id\": 2,\n            \"units\": 3,\n            \"capacity\": 35,\n            \"exam_time\": 1674365400,\n            \"class_time\": [\n                {\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"میثم نظریانی\"\n        },\n        {\n            \"course_id\": 40254,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 71,\n            \"exam_time\": 1673415000,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1052,\n                    \"end_minute\": 646\n                }\n            ],\n            \"lecturer\": \"مهدی صفرنژاد بروجنی\"\n        },\n        {\n            \"course_id\": 40254,\n            \"group_id\": 2,\n            \"units\": 3,\n            \"capacity\": 60,\n            \"exam_time\": 1674365400,\n            \"class_time\": [\n                {\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"محمد علی آبام\"\n        },\n        {\n            \"course_id\": 40402,\n            \"group_id\": 1,\n            \"units\": 1,\n            \"capacity\": 18,\n            \"class_time\": [\n                {\n                    \"day\": 3,\n                    \"start_minute\": 540,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"شاهین حسابی\"\n        },\n        {\n            \"course_id\": 40282,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 65,\n            \"exam_time\": 1674365400,\n            \"class_time\": [\n                {\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"حمیدرضا ربیعی، مریم رمضانی\"\n        },\n        {\n            \"course_id\": 40282,\n            \"group_id\": 2,\n            \"units\": 3,\n            \"capacity\": 50,\n            \"exam_time\": 1673695800,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 62,\n                    \"end_minute\": 1097\n                }\n            ],\n            \"lecturer\": \"سمیرا حسین قربان\"\n        },\n        {\n            \"course_id\": 40212,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 60,\n            \"exam_time\": 1673415000,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1052,\n                    \"end_minute\": 646\n                }\n            ],\n            \"lecturer\": \"لاله ارشدی\"\n        },\n        {\n            \"course_id\": 40496,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 50,\n            \"exam_time\": 1673523000,\n            \"class_time\": [\n                {\n                    \"start_minute\": 990,\n                    \"end_minute\": 1080\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 990,\n                    \"end_minute\": 1080\n                }\n            ],\n            \"lecturer\": \"شاهین روحانی\"\n        },\n        {\n            \"course_id\": 40211,\n            \"group_id\": 2,\n            \"units\": 2,\n            \"capacity\": 35,\n            \"exam_time\": 1673350200,\n            \"class_time\": [\n                {\n                    \"day\": 3,\n                    \"start_minute\": 540,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"ساشا مهدوی هزاوهء\"\n        },\n        {\n            \"course_id\": 40211,\n            \"group_id\": 1,\n            \"units\": 2,\n            \"capacity\": 30,\n            \"exam_time\": 1673350200,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 810,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"ساشا مهدوی هزاوهء\"\n        },\n        {\n            \"course_id\": 40211,\n            \"group_id\": 3,\n            \"units\": 2,\n            \"capacity\": 35,\n            \"exam_time\": 1673350200,\n            \"class_time\": [\n                {\n                    \"day\": 3,\n                    \"start_minute\": 810,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"ساشا مهدوی هزاوهء\"\n        },\n        {\n            \"course_id\": 40108,\n            \"group_id\": 1,\n            \"units\": 1,\n            \"capacity\": 1,\n            \"lecturer\": \"مرتضی امینی\"\n        },\n        {\n            \"course_id\": 40108,\n            \"group_id\": 6,\n            \"units\": 1,\n            \"capacity\": 4,\n            \"class_time\": [\n                {\n                    \"day\": 3,\n                    \"start_minute\": 540,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"حمید ضرابی زاده\"\n        },\n        {\n            \"course_id\": 40108,\n            \"group_id\": 4,\n            \"units\": 1,\n            \"capacity\": 4,\n            \"class_time\": [\n                {\n                    \"day\": 2,\n                    \"start_minute\": 900,\n                    \"end_minute\": 1080\n                }\n            ],\n            \"lecturer\": \"حمید ضرابی زاده\"\n        },\n        {\n            \"course_id\": 40108,\n            \"group_id\": 5,\n            \"units\": 1,\n            \"capacity\": 3,\n            \"class_time\": [\n                {\n                    \"day\": 3,\n                    \"start_minute\": 900,\n                    \"end_minute\": 1080\n                }\n            ],\n            \"lecturer\": \"حمید ضرابی زاده\"\n        },\n        {\n            \"course_id\": 40108,\n            \"group_id\": 2,\n            \"units\": 1,\n            \"capacity\": 2,\n            \"class_time\": [\n                {\n                    \"start_minute\": 900,\n                    \"end_minute\": 1080\n                }\n            ],\n            \"lecturer\": \"مرتضی امینی\"\n        },\n        {\n            \"course_id\": 40108,\n            \"group_id\": 3,\n            \"units\": 1,\n            \"capacity\": 2,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 900,\n                    \"end_minute\": 1080\n                }\n            ],\n            \"lecturer\": \"مرتضی امینی\"\n        },\n        {\n            \"course_id\": 40242,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 60,\n            \"exam_time\": 1674365400,\n            \"class_time\": [\n                {\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"حسین صامتی\"\n        },\n        {\n            \"course_id\": 40242,\n            \"group_id\": 2,\n            \"units\": 3,\n            \"capacity\": 60,\n            \"exam_time\": 1674127800,\n            \"class_time\": [\n                {\n                    \"start_minute\": 900,\n                    \"end_minute\": 990\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 900,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"محمدتقی منظوری شلمانی\"\n        },\n        {\n            \"course_id\": 40408,\n            \"group_id\": 1,\n            \"units\": 1,\n            \"capacity\": 25,\n            \"class_time\": [\n                {\n                    \"day\": 3,\n                    \"start_minute\": 540,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"حمید بیگی\"\n        },\n        {\n            \"course_id\": 40408,\n            \"group_id\": 2,\n            \"units\": 1,\n            \"capacity\": 25,\n            \"class_time\": [\n                {\n                    \"day\": 3,\n                    \"start_minute\": 810,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"حمید بیگی\"\n        },\n        {\n            \"course_id\": 40102,\n            \"group_id\": 1,\n            \"units\": 1,\n            \"capacity\": 20,\n            \"class_time\": [\n                {\n                    \"day\": 3,\n                    \"start_minute\": 810,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"علیرضا اجلالی\"\n        },\n        {\n            \"course_id\": 40494,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 65,\n            \"exam_time\": 1674365400,\n            \"class_time\": [\n                {\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"سمیه کوهی، علی شریفی زارچی\"\n        },\n        {\n            \"course_id\": 40418,\n            \"group_id\": 2,\n            \"units\": 3,\n            \"capacity\": 45,\n            \"exam_time\": 1673760600,\n            \"class_time\": [\n                {\n                    \"start_minute\": 450,\n                    \"end_minute\": 540\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 450,\n                    \"end_minute\": 540\n                }\n            ],\n            \"lecturer\": \"حمیدرضا احمدیان\"\n        },\n        {\n            \"course_id\": 40418,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 45,\n            \"exam_time\": 1674279000,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1412,\n                    \"end_minute\": 1006\n                }\n            ],\n            \"lecturer\": \"مهدی مصطفی زاده\"\n        },\n        {\n            \"course_id\": 40244,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 60,\n            \"exam_time\": 1673695800,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 62,\n                    \"end_minute\": 1097\n                }\n            ],\n            \"lecturer\": \"حمیدرضا حسینخانی\"\n        },\n        {\n            \"course_id\": 40833,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1673955000,\n            \"class_time\": [\n                {\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                }\n            ],\n            \"lecturer\": \"حسین صامتی\"\n        },\n        {\n            \"course_id\": 40572,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1673328600,\n            \"class_time\": [\n                {\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                }\n            ],\n            \"lecturer\": \"بابک حسین خلج، مجتبی تفاق\"\n        },\n        {\n            \"course_id\": 40438,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 50,\n            \"exam_time\": 1674019800,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1322,\n                    \"end_minute\": 916\n                }\n            ],\n            \"lecturer\": \"سیدابراهیم ابطحی\"\n        },\n        {\n            \"course_id\": 40634,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 80,\n            \"exam_time\": 1673328600,\n            \"class_time\": [\n                {\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                }\n            ],\n            \"lecturer\": \"بردیا صفائی\"\n        },\n        {\n            \"course_id\": 40404,\n            \"group_id\": 1,\n            \"units\": 1,\n            \"capacity\": 25,\n            \"lecturer\": \"سیدحسن میریان حسین آبادی\"\n        },\n        {\n            \"course_id\": 40475,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 50,\n            \"exam_time\": 1673868600,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1142,\n                    \"end_minute\": 736\n                }\n            ],\n            \"lecturer\": \"رامان رامسین\"\n        },\n        {\n            \"course_id\": 40824,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 25,\n            \"exam_time\": 1673955000,\n            \"class_time\": [\n                {\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                }\n            ],\n            \"lecturer\": \"علی موقررحیم آبادی\"\n        },\n        {\n            \"course_id\": 40719,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 40,\n            \"exam_time\": 1673868600,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1142,\n                    \"end_minute\": 736\n                }\n            ],\n            \"lecturer\": \"حمید بیگی\"\n        },\n        {\n            \"course_id\": 40353,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 50,\n            \"exam_time\": 1674127800,\n            \"class_time\": [\n                {\n                    \"start_minute\": 900,\n                    \"end_minute\": 990\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 900,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"شاهین حسابی\"\n        },\n        {\n            \"course_id\": 40441,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 50,\n            \"exam_time\": 1673695800,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 62,\n                    \"end_minute\": 1097\n                }\n            ],\n            \"lecturer\": \"مهدی خرازی\"\n        },\n        {\n            \"course_id\": 40441,\n            \"group_id\": 2,\n            \"units\": 3,\n            \"capacity\": 60,\n            \"exam_time\": 1673955000,\n            \"class_time\": [\n                {\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                }\n            ],\n            \"lecturer\": \"کامبیز میزانیان\"\n        },\n        {\n            \"course_id\": 40324,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 70,\n            \"exam_time\": 1673415000,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1052,\n                    \"end_minute\": 646\n                }\n            ],\n            \"lecturer\": \"حمید بیگی\"\n        },\n        {\n            \"course_id\": 40323,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 75,\n            \"exam_time\": 1673868600,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1142,\n                    \"end_minute\": 736\n                }\n            ],\n            \"lecturer\": \"لاله ارشدی\"\n        },\n        {\n            \"course_id\": 40419,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 80,\n            \"exam_time\": 1673955000,\n            \"class_time\": [\n                {\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                }\n            ],\n            \"lecturer\": \"امید جعفری نژاد\"\n        },\n        {\n            \"course_id\": 40223,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 60,\n            \"exam_time\": 1673415000,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1052,\n                    \"end_minute\": 646\n                }\n            ],\n            \"lecturer\": \"سیاوش بیات سرمدی\"\n        },\n        {\n            \"course_id\": 40221,\n            \"group_id\": 3,\n            \"units\": 2,\n            \"capacity\": 14,\n            \"exam_time\": 1674019800,\n            \"class_time\": [\n                {\n                    \"day\": 3,\n                    \"start_minute\": 780,\n                    \"end_minute\": 900\n                }\n            ],\n            \"lecturer\": \"سیدابراهیم ابطحی\"\n        },\n        {\n            \"course_id\": 40221,\n            \"group_id\": 2,\n            \"units\": 2,\n            \"capacity\": 21,\n            \"exam_time\": 1673328600,\n            \"class_time\": [\n                {\n                    \"start_minute\": 780,\n                    \"end_minute\": 900\n                }\n            ],\n            \"lecturer\": \"شهره کسائی\"\n        },\n        {\n            \"course_id\": 40221,\n            \"group_id\": 4,\n            \"units\": 2,\n            \"capacity\": 21,\n            \"exam_time\": 1673328600,\n            \"class_time\": [\n                {\n                    \"day\": 2,\n                    \"start_minute\": 780,\n                    \"end_minute\": 900\n                }\n            ],\n            \"lecturer\": \"شهره کسائی\"\n        },\n        {\n            \"course_id\": 40221,\n            \"group_id\": 1,\n            \"units\": 2,\n            \"capacity\": 40,\n            \"exam_time\": 1673415000,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 510,\n                    \"end_minute\": 630\n                }\n            ],\n            \"lecturer\": \"امیرحسین جهانگیر\"\n        },\n        {\n            \"course_id\": 40203,\n            \"group_id\": 3,\n            \"units\": 1,\n            \"capacity\": 12,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 540,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"علیرضا اجلالی\"\n        },\n        {\n            \"course_id\": 40203,\n            \"group_id\": 2,\n            \"units\": 1,\n            \"capacity\": 12,\n            \"class_time\": [\n                {\n                    \"day\": 3,\n                    \"start_minute\": 810,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"محسن انصاری\"\n        },\n        {\n            \"course_id\": 40203,\n            \"group_id\": 1,\n            \"units\": 1,\n            \"capacity\": 12,\n            \"class_time\": [\n                {\n                    \"day\": 3,\n                    \"start_minute\": 540,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"علیرضا اجلالی\"\n        },\n        {\n            \"course_id\": 40203,\n            \"group_id\": 4,\n            \"units\": 1,\n            \"capacity\": 12,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 810,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"محسن انصاری\"\n        },\n        {\n            \"course_id\": 40834,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1673328600,\n            \"class_time\": [\n                {\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 810,\n                    \"end_minute\": 900\n                }\n            ],\n            \"lecturer\": \"حمید ضرابی زاده\"\n        },\n        {\n            \"course_id\": 40416,\n            \"group_id\": 2,\n            \"units\": 1,\n            \"capacity\": 25,\n            \"class_time\": [\n                {\n                    \"day\": 3,\n                    \"start_minute\": 810,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"بردیا صفائی\"\n        },\n        {\n            \"course_id\": 40416,\n            \"group_id\": 1,\n            \"units\": 1,\n            \"capacity\": 27,\n            \"class_time\": [\n                {\n                    \"day\": 3,\n                    \"start_minute\": 540,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"بردیا صفائی\"\n        },\n        {\n            \"course_id\": 40206,\n            \"group_id\": 6,\n            \"units\": 1,\n            \"capacity\": 14,\n            \"lecturer\": \"محسن انصاری\"\n        },\n        {\n            \"course_id\": 40206,\n            \"group_id\": 4,\n            \"units\": 1,\n            \"capacity\": 14,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 810,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"شاهین حسابی\"\n        },\n        {\n            \"course_id\": 40206,\n            \"group_id\": 3,\n            \"units\": 1,\n            \"capacity\": 14,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 540,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"محسن انصاری\"\n        },\n        {\n            \"course_id\": 40206,\n            \"group_id\": 1,\n            \"units\": 1,\n            \"capacity\": 16,\n            \"class_time\": [\n                {\n                    \"day\": 3,\n                    \"start_minute\": 540,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"محسن انصاری\"\n        },\n        {\n            \"course_id\": 40206,\n            \"group_id\": 2,\n            \"units\": 1,\n            \"capacity\": 16,\n            \"class_time\": [\n                {\n                    \"day\": 3,\n                    \"start_minute\": 810,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"شاهین حسابی\"\n        },\n        {\n            \"course_id\": 40206,\n            \"group_id\": 5,\n            \"units\": 1,\n            \"capacity\": 14,\n            \"lecturer\": \"شاهین حسابی\"\n        },\n        {\n            \"course_id\": 40638,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1673695800,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 62,\n                    \"end_minute\": 1097\n                }\n            ],\n            \"lecturer\": \"حسین اسدی\"\n        },\n        {\n            \"course_id\": 40783,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1674365400,\n            \"class_time\": [\n                {\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"شاهین حسابی\"\n        },\n        {\n            \"course_id\": 40820,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1673955000,\n            \"class_time\": [\n                {\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 540,\n                    \"end_minute\": 630\n                }\n            ],\n            \"lecturer\": \"معصومه کوچک شوشتری\"\n        },\n        {\n            \"course_id\": 40723,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1673868600,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1142,\n                    \"end_minute\": 736\n                }\n            ],\n            \"lecturer\": \"امیرحسین جهانگیر\"\n        },\n        {\n            \"course_id\": 40763,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 25,\n            \"exam_time\": 1674365400,\n            \"class_time\": [\n                {\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"محمدتقی منظوری شلمانی\"\n        },\n        {\n            \"course_id\": 40815,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1674279000,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1412,\n                    \"end_minute\": 1006\n                }\n            ],\n            \"lecturer\": \"مهدی خرازی\"\n        },\n        {\n            \"course_id\": 40646,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 25,\n            \"exam_time\": 1674365400,\n            \"class_time\": [\n                {\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"جعفر حبیبی\"\n        },\n        {\n            \"course_id\": 40676,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1673868600,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1142,\n                    \"end_minute\": 736\n                }\n            ],\n            \"lecturer\": \"مهدی جعفری سیاوشانی\"\n        },\n        {\n            \"course_id\": 40828,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1673868600,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1142,\n                    \"end_minute\": 736\n                }\n            ],\n            \"lecturer\": \"سیدحسن میریان حسین آبادی\"\n        },\n        {\n            \"course_id\": 40616,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1674365400,\n            \"class_time\": [\n                {\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 630,\n                    \"end_minute\": 720\n                }\n            ],\n            \"lecturer\": \"شهره کسائی\"\n        },\n        {\n            \"course_id\": 40843,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1674279000,\n            \"class_time\": [\n                {\n                    \"day\": 1,\n                    \"start_minute\": 1412,\n                    \"end_minute\": 1006\n                }\n            ],\n            \"lecturer\": \"حمید سربازی آزاد، هاجر فلاحتی\"\n        },\n        {\n            \"course_id\": 40429,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 60,\n            \"exam_time\": 1674127800,\n            \"class_time\": [\n                {\n                    \"start_minute\": 900,\n                    \"end_minute\": 990\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 900,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"سعید ناری\"\n        },\n        {\n            \"course_id\": 40637,\n            \"group_id\": 1,\n            \"units\": 3,\n            \"capacity\": 20,\n            \"exam_time\": 1674127800,\n            \"class_time\": [\n                {\n                    \"start_minute\": 900,\n                    \"end_minute\": 990\n                },\n                {\n                    \"day\": 2,\n                    \"start_minute\": 900,\n                    \"end_minute\": 990\n                }\n            ],\n            \"lecturer\": \"غلامرضا قاسم ثانی\"\n        }\n    ]\n}"
+				}
+			]
+		}
+	]
+}
