@@ -3,6 +3,7 @@ package DatabaseBatcher
 import (
 	"CourseEnrollment/pkg/course"
 	"context"
+	"github.com/go-faster/errors"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -36,9 +37,37 @@ func (db Database) ChangeCourseGroup(stdID course.StudentID, courseID course.Cou
 
 // UpdateCapacity will update the capacity of a course
 func (db Database) UpdateCapacity(courseID course.CourseID, groupID course.GroupID, newCapacity int32) error {
-	// TODO: update the reserved status of users
-	_, err := db.db.Exec(context.Background(), "UPDATE courses SET capacity=$1 WHERE course_id=$2 AND group_id=$3", newCapacity, courseID, groupID)
-	return err
+	// Start a transaction
+	tx, err := db.db.Begin(context.Background())
+	if err != nil {
+		return errors.Wrap(err, "cannot start transaction")
+	}
+	defer tx.Rollback(context.Background())
+	// Check how many seats we have added
+	var oldCapacity int32
+	err = tx.QueryRow(context.Background(), "SELECT capacity FROM courses WHERE course_id=$1 AND group_id=$2", courseID, groupID).Scan(&oldCapacity)
+	if err != nil {
+		return errors.Wrap(err, "cannot get old capacity")
+	}
+	addedSeats := newCapacity - oldCapacity
+	// Put people from reserve into main class capacity if needed
+	if addedSeats > 0 {
+		_, err = tx.Exec(context.Background(), "UPDATE enrolled_courses SET reserved=FALSE WHERE id IN (SELECT id FROM enrolled_courses WHERE course_id=$1 AND group_id=$2 AND reserved=TRUE ORDER BY id LIMIT $3)", courseID, groupID, addedSeats)
+		if err != nil {
+			return errors.Wrap(err, "cannot update reserved status")
+		}
+	}
+	// Update the course capacity
+	_, err = tx.Exec(context.Background(), "UPDATE courses SET capacity=$1 WHERE course_id=$2 AND group_id=$3", newCapacity, courseID, groupID)
+	if err != nil {
+		return errors.Wrap(err, "cannot update course capacity")
+	}
+	// Done
+	err = tx.Commit(context.Background())
+	if err != nil {
+		return errors.Wrap(err, "cannot commit")
+	}
+	return nil
 }
 
 // Close will close the connection
