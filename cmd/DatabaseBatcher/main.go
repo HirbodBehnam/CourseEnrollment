@@ -55,7 +55,7 @@ func processQuery(database db.Database, query *proto.CourseDatabaseBatchMessage)
 	case *proto.CourseDatabaseBatchMessage_ChangeGroup:
 		err = database.ChangeCourseGroup(course.StudentID(data.ChangeGroup.StudentId), course.CourseID(data.ChangeGroup.CourseId), course.GroupID(data.ChangeGroup.GroupId), data.ChangeGroup.Reserved)
 	case *proto.CourseDatabaseBatchMessage_UpdateCapacity:
-		err = database.UpdateCapacity(course.CourseID(data.UpdateCapacity.CourseId), course.GroupID(data.UpdateCapacity.GroupId), data.UpdateCapacity.NewCapacity)
+		err = database.UpdateCapacity(course.CourseID(data.UpdateCapacity.CourseId), course.GroupID(data.UpdateCapacity.GroupId), data.UpdateCapacity.NewCapacity, data.UpdateCapacity.MovedStudents)
 	default:
 		log.WithField("query", query).Error("invalid action")
 		return

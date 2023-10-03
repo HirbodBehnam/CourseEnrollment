@@ -36,23 +36,16 @@ func (db Database) ChangeCourseGroup(stdID course.StudentID, courseID course.Cou
 }
 
 // UpdateCapacity will update the capacity of a course
-func (db Database) UpdateCapacity(courseID course.CourseID, groupID course.GroupID, newCapacity int32) error {
+func (db Database) UpdateCapacity(courseID course.CourseID, groupID course.GroupID, newCapacity int32, movedStudents []uint64) error {
 	// Start a transaction
 	tx, err := db.db.Begin(context.Background())
 	if err != nil {
 		return errors.Wrap(err, "cannot start transaction")
 	}
 	defer tx.Rollback(context.Background())
-	// Check how many seats we have added
-	var oldCapacity int32
-	err = tx.QueryRow(context.Background(), "SELECT capacity FROM courses WHERE course_id=$1 AND group_id=$2", courseID, groupID).Scan(&oldCapacity)
-	if err != nil {
-		return errors.Wrap(err, "cannot get old capacity")
-	}
-	addedSeats := newCapacity - oldCapacity
 	// Put people from reserve into main class capacity if needed
-	if addedSeats > 0 {
-		_, err = tx.Exec(context.Background(), "UPDATE enrolled_courses SET reserved=FALSE WHERE id IN (SELECT id FROM enrolled_courses WHERE course_id=$1 AND group_id=$2 AND reserved=TRUE ORDER BY id LIMIT $3)", courseID, groupID, addedSeats)
+	if len(movedStudents) != 0 {
+		_, err = tx.Exec(context.Background(), "UPDATE enrolled_courses SET reserved=FALSE WHERE id = ANY($1)", movedStudents)
 		if err != nil {
 			return errors.Wrap(err, "cannot update reserved status")
 		}
