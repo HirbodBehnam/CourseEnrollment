@@ -4,6 +4,7 @@ import (
 	"CourseEnrollment/pkg/course"
 	"CourseEnrollment/pkg/proto"
 	"context"
+	"github.com/go-faster/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,7 +24,8 @@ func (api *API) StudentEnroll(ctx context.Context, r *proto.StudentEnrollRequest
 	// Enroll
 	err := std.EnrollCourse(ctx, api.Courses, course.CourseID(r.CourseId), course.GroupID(r.GroupId), api.Broker)
 	if err != nil {
-		if batchError, ok := err.(course.BatchError); ok {
+		var batchError course.BatchError
+		if errors.As(err, &batchError) {
 			err = status.Error(codes.Internal, "")
 			log.WithError(batchError).Error("cannot batch data")
 		} else {
@@ -45,7 +47,8 @@ func (api *API) StudentDisenroll(ctx context.Context, r *proto.StudentDisenrollR
 	// Disenroll
 	err := std.DisenrollCourse(ctx, api.Courses, course.CourseID(r.CourseId), api.Broker)
 	if err != nil {
-		if batchError, ok := err.(course.BatchError); ok {
+		var batchError course.BatchError
+		if errors.As(err, &batchError) {
 			err = status.Error(codes.Internal, "")
 			log.WithError(batchError).Error("cannot batch data")
 		} else {
@@ -67,7 +70,8 @@ func (api *API) StudentChangeGroup(ctx context.Context, r *proto.StudentChangeGr
 	// Change group
 	err := std.ChangeGroup(ctx, api.Courses, course.CourseID(r.CourseId), course.GroupID(r.NewGroupId), api.Broker)
 	if err != nil {
-		if batchError, ok := err.(course.BatchError); ok {
+		var batchError course.BatchError
+		if errors.As(err, &batchError) {
 			err = status.Error(codes.Internal, "")
 			log.WithError(batchError).Error("cannot batch data")
 		} else {

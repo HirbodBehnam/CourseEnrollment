@@ -3,6 +3,7 @@ package course
 import (
 	"CourseEnrollment/pkg/util"
 	"context"
+	"errors"
 	"github.com/benbjohnson/clock"
 	"github.com/stretchr/testify/assert"
 	"math"
@@ -765,7 +766,7 @@ func TestStudentChangeGroupLock1(t *testing.T) {
 						for {
 							err := students[index].ChangeGroup(context.Background(), &courses, CourseID(1), GroupID(nextGroupID), noOpBatcher{})
 							// If there is no capacity, we just try again
-							if err == NoCapacityLeftErr {
+							if errors.Is(err, NoCapacityLeftErr) {
 								runtime.Gosched() // Let other threads do stuff
 								continue
 							}
@@ -846,7 +847,7 @@ func TestStudentChangeGroupLock2(t *testing.T) {
 					for {
 						err := students[index].ChangeGroup(context.Background(), &courses, CourseID(1), GroupID(nextGroupID), noOpBatcher{})
 						// If there is no capacity, we just try again
-						if err == NoCapacityLeftErr {
+						if errors.Is(err, NoCapacityLeftErr) {
 							runtime.Gosched() // Let other threads do stuff
 							continue
 						}

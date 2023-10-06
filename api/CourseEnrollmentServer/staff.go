@@ -4,6 +4,7 @@ import (
 	"CourseEnrollment/pkg/course"
 	"CourseEnrollment/pkg/proto"
 	"context"
+	"github.com/go-faster/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -31,7 +32,8 @@ func (api *API) ForceEnroll(ctx context.Context, req *proto.StudentEnrollRequest
 	// Enroll
 	err := std.ForceEnrollCourse(ctx, api.Courses, course.CourseID(req.CourseId), course.GroupID(req.GroupId), api.Broker)
 	if err != nil {
-		if batchError, ok := err.(course.BatchError); ok {
+		var batchError course.BatchError
+		if errors.As(err, &batchError) {
 			err = status.Error(codes.Internal, "")
 			log.WithError(batchError).Error("cannot batch data")
 		} else {
@@ -55,7 +57,8 @@ func (api *API) ForceDisenroll(ctx context.Context, req *proto.StudentDisenrollR
 	// Disenroll
 	err := std.ForceDisenrollCourse(ctx, api.Courses, course.CourseID(req.CourseId), api.Broker)
 	if err != nil {
-		if batchError, ok := err.(course.BatchError); ok {
+		var batchError course.BatchError
+		if errors.As(err, &batchError) {
 			err = status.Error(codes.Internal, "")
 			log.WithError(batchError).Error("cannot batch data")
 		} else {
@@ -78,7 +81,8 @@ func (api *API) ChangeCapacity(ctx context.Context, req *proto.ChangeCourseCapac
 	// Update capacity
 	err := c.UpdateCapacity(ctx, int(req.NewCapacity), api.Broker)
 	if err != nil {
-		if batchError, ok := err.(course.BatchError); ok {
+		var batchError course.BatchError
+		if errors.As(err, &batchError) {
 			err = status.Error(codes.Internal, "")
 			log.WithError(batchError).Error("cannot batch data")
 		} else {

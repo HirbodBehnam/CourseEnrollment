@@ -3,6 +3,7 @@ package AuthCore
 import (
 	"CourseEnrollment/pkg/course"
 	"context"
+	"errors"
 	"github.com/go-faster/errors"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -29,7 +30,7 @@ func (db Database) AuthUser(ctx context.Context, id uint64, password string, isS
 		err = db.db.QueryRow(ctx, "SELECT password, department_id FROM students WHERE id=$1", id).Scan(&hashedPassword, &departmentID)
 	}
 	// No user found
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return false, 0, nil
 	}
 	if err != nil {
