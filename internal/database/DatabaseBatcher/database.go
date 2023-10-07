@@ -4,7 +4,7 @@ import (
 	"CourseEnrollment/pkg/course"
 	"context"
 	"github.com/go-faster/errors"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Database struct {

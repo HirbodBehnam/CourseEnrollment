@@ -3,10 +3,9 @@ package AuthCore
 import (
 	"CourseEnrollment/pkg/course"
 	"context"
-	"errors"
 	"github.com/go-faster/errors"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
 
