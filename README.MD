@@ -4,7 +4,7 @@ A fast course enrollment service written with Go and backed by PostgreSQL and Ra
 
 ## Features
 
-* Very fast. Handles 2000 req/s in a 1 Core (i7 4790K) / 1 GB VM
+* Very fast. Handles 700 req/s in a 1 Core (i7 4790K) / 1 GB VM
 * Student and Admins (staff) endpoints
 * Reserve Queues
 * REST API
@@ -77,4 +77,11 @@ export CORE_ADDRESS=unix:///dev/shm/CES.sock
 export LISTEN_ADDRESS=127.0.0.1:12345
 export GIN_MODE=release
 ./AuthCore
+```
+
+### Benchmark
+
+```bash
+export STD_COUNT=12000
+
 ```

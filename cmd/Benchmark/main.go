@@ -30,6 +30,8 @@ func main() {
 	}
 	// Connect to database and create users
 	students := setupDatabase(databaseUrl, studentCount)
+	log.Info("Press enter to start...")
+	fmt.Scanln()
 	// Authorize users and spawn the register routines
 	startRegisterBarrier := make(chan struct{}) // close this channel to register everyone
 	var totalRequests, failedRequests atomic.Int32
@@ -41,8 +43,6 @@ func main() {
 		go registerCourses(&totalRequests, &failedRequests, doneWg, startRegisterBarrier, authCoreURL, std)
 	}
 	// Wait for user
-	log.Info("Press enter to start...")
-	fmt.Scanln()
 	runtime.GC()
 	// Start the timer and wait
 	log.Info("starting the registration")
