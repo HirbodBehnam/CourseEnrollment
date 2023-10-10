@@ -4,7 +4,7 @@ A fast course enrollment service written with Go and backed by PostgreSQL and Ra
 
 ## Features
 
-* Very fast. Handles 700 req/s in a 1 Core (i7 4790K) / 1 GB VM
+* Very fast. Handles 3500 req/s in a 1 Core (i7 4790K) / 1 GB VM
 * Student and Admins (staff) endpoints
 * Reserve Queues
 * REST API
@@ -18,7 +18,7 @@ A fast course enrollment service written with Go and backed by PostgreSQL and Ra
 * 1 GB RAM
 * HDD
 * VirtualBox 7.0.10
-* Windows 10 Host
+* Ubutnu 22.04 Kernel 6.2 Host
 * Ubuntu 22.04 Kernel 5.15 Guest
 * CourseEnrollment compiled with GO 1.21.1
 
@@ -57,11 +57,15 @@ docker run -itd --hostname course-broker --name course-broker -e RABBITMQ_DEFAUL
 
 Finally, we have to run each service.
 
+#### Database Batcher
+
 ```bash
 export DATABASE_URL=postgres://hirbod:1234@127.0.0.1:5432/course_enrollment
 export RABBITMQ_ADDRESS=amqp://hirbod:1234@127.0.0.1:5672/
 ./DatabaseBatcher
 ```
+
+#### Course Enrollment Server
 
 ```bash
 export DATABASE_URL=postgres://hirbod:1234@127.0.0.1:5432/course_enrollment
@@ -70,6 +74,8 @@ export LISTEN_PROTOCOL=unix
 export LISTEN_ADDRESS=/dev/shm/CES.sock
 ./CourseEnrollmentServer
 ```
+
+#### Auth Core
 
 ```bash
 export DATABASE_URL=postgres://hirbod:1234@127.0.0.1:5432/course_enrollment
@@ -81,7 +87,18 @@ export GIN_MODE=release
 
 ### Benchmark
 
-```bash
-export STD_COUNT=12000
+Set the VM network adaptor as host only. This will allow to to connect to guest VM. Let the guest IP be `192.168.56.101`. Use the following environment variables to setup the benchmark and run it. You need to restart the core before pressing enter when the program asks you.
 
+```bash
+export STD_COUNT=1000
+export AUTH_CORE_URL=http://127.0.0.1:12345
+./Benchmark
+```
+
+For example, on my computer the result is like this:
+
+```
+INFO[0017] Done in 2.019180475s                         
+INFO[0017] Total requests: 7000                         
+INFO[0017] Failed requests: 1423
 ```
