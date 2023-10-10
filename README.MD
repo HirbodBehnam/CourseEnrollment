@@ -5,6 +5,8 @@ A fast course enrollment service written with Go and backed by PostgreSQL and Ra
 ## Features
 
 * Very fast. Handles 3500 req/s in a 1 Core (i7 4790K) / 1 GB VM
+* Small memory footprint: About 13 MB of memory usage for 1500 courses and 1000 students.
+* No disk bottleneck due to RabbitMQ (excluding RabbitMQ disk usage itself)
 * Student and Admins (staff) endpoints
 * Reserve Queues
 * REST API
@@ -87,18 +89,26 @@ export GIN_MODE=release
 
 ### Benchmark
 
-Set the VM network adaptor as host only. This will allow to to connect to guest VM. Let the guest IP be `192.168.56.101`. Use the following environment variables to setup the benchmark and run it. You need to restart the core before pressing enter when the program asks you.
+Set the VM network adaptor as host only. This will allow to to connect to guest VM. Let the guest IP
+be `192.168.56.101`. Use the following environment variables to setup the benchmark and run it. You need to restart the
+core before pressing enter when the program asks you.
 
 ```bash
 export STD_COUNT=1000
-export AUTH_CORE_URL=http://127.0.0.1:12345
+export DATABASE_URL=postgres://hirbod:1234@192.168.56.101:5432/course_enrollment
+export AUTH_CORE_URL=http://192.168.56.101:12345
 ./Benchmark
 ```
 
-For example, on my computer the result is like this:
+#### Results
+
+On my computer the result is like this:
 
 ```
-INFO[0017] Done in 2.019180475s                         
-INFO[0017] Total requests: 7000                         
-INFO[0017] Failed requests: 1423
+INFO[0026] Done in 1.880980622s                         
+INFO[0026] Total requests: 7000                         
+INFO[0026] Failed requests: 1504
 ```
+
+**Note**: Windows tend to have some problems with VirtualBox network driver which makes it slow. I could only get about
+700 req/s on Windows.
