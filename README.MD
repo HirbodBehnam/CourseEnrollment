@@ -12,6 +12,103 @@ A fast course enrollment service written with Go and backed by PostgreSQL and Ra
 * REST API
 * JWT Authentication
 
+## Running
+
+At first, you need to spin up PostgreSQL and RabbitMQ. Assume that PostgreSQL is running on `127.0.0.1:5432` and
+RabbitMQ is running on `127.0.0.1:5672`. At first, you need to create the required tables for the microservices to
+function. To do so, you can simply redirect the `database.sql` file to the stdin of `psql` command like so:
+
+```bash
+psql -U hirbod course_enrollment < database.sql
+```
+
+One thing you have to note is that the core, caches the students in memory. So you cannot add students while this
+program is running. Like who registers students to a university on an active course enrollment? So after you have
+created your schema, add your students to `students` table.
+
+Now, you have to start the services. It is advised to start them with this order:
+
+### Batcher
+
+These environment values must be supplied for the batcher:
+
+* `DATABASE_URL`: PostgreSQL connection URL
+* `RABBITMQ_ADDRESS`: RabbitMQ connection URL
+
+For example:
+
+```bash
+export DATABASE_URL=postgres://hirbod:1234@127.0.0.1:5432/course_enrollment
+export RABBITMQ_ADDRESS=amqp://hirbod:1234@127.0.0.1:5672/
+```
+
+### Enrollment Server
+
+These environment values must be supplied for the enrollment server:
+
+* `DATABASE_URL`: PostgreSQL connection URL
+* `RABBITMQ_ADDRESS`: RabbitMQ connection URL
+* `LISTEN_ADDRESS`: The address which the core expects the auth core to make requests to it.
+* `LISTEN_PROTOCOL` (Optional): The protocol which the enrollment server excepts the auth core to make its requests in.
+  The default is `tcp`. If two services are on a single operating system, `unix` is recommended.
+
+Example of TCP listening:
+
+```bash
+export DATABASE_URL=postgres://hirbod:1234@127.0.0.1:5432/course_enrollment
+export RABBITMQ_ADDRESS=amqp://hirbod:1234@127.0.0.1:5672/
+export LISTEN_ADDRESS=0.0.0.0:23621
+```
+
+Example of unix sockets:
+
+```bash
+export DATABASE_URL=postgres://hirbod:1234@127.0.0.1:5432/course_enrollment
+export RABBITMQ_ADDRESS=amqp://hirbod:1234@127.0.0.1:5672/
+export LISTEN_PROTOCOL=unix
+export LISTEN_ADDRESS=/dev/shm/CES.sock
+```
+
+### Authorization Core
+
+These environment values must be supplied for the authorization core:
+
+* `DATABASE_URL`: PostgreSQL connection URL
+* `CORE_ADDRESS`: The address of the enrollment server. This can be a `unix://` link if the enrollment server is
+  listening on a unix socket. Otherwise, plain gRPC over TCP is used.
+* `LISTEN_ADDRESS`: The address which the authorization core expects the students and the staff to access it.
+* `LISTEN_PROTOCOL` (Optional): The protocol which the authorization core excepts the users their requests in.
+  The default is `tcp`. If you are using a reverse proxy (for example nginx), `unix` is recommended.
+* `GIN_MODE` (Optional): Set this value to `release` if you are running this core in production. This will suppress the
+  logs.
+
+Example of everything over TCP:
+
+```bash
+export DATABASE_URL=postgres://hirbod:1234@127.0.0.1:5432/course_enrollment
+export CORE_ADDRESS=127.0.0.1:23621
+export LISTEN_ADDRESS=0.0.0.0:80
+export GIN_MODE=release
+```
+
+Example of everything over unix sockets:
+
+```bash
+export DATABASE_URL=postgres://hirbod:1234@127.0.0.1:5432/course_enrollment
+export CORE_ADDRESS=unix:///dev/shm/CES.sock
+export LISTEN_ADDRESS=/dev/shm/auth.sock
+export LISTEN_PROTOCOL=unix
+export GIN_MODE=release
+```
+
+## Details
+
+### Authorization Core
+
+### Enrollment Server
+
+### Batcher
+
 ## Benchmark in VirtualBox
 
 ### Specifications
@@ -89,7 +186,7 @@ export GIN_MODE=release
 
 ### Benchmark
 
-Set the VM network adaptor as host only. This will allow to to connect to guest VM. Let the guest IP
+Set the VM network adaptor as host only. This will allow to connect to guest VM. Let the guest IP
 be `192.168.56.101`. Use the following environment variables to setup the benchmark and run it. You need to restart the
 core before pressing enter when the program asks you.
 
