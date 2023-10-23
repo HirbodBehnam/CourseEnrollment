@@ -9,6 +9,7 @@ A fast course enrollment service written with Go and backed by PostgreSQL and Ra
 * No disk bottleneck due to RabbitMQ (excluding RabbitMQ disk usage itself)
 * Student and Admins (staff) endpoints
 * Reserve Queues
+* Partially horizontally scalable
 * REST API
 * JWT Authentication
 
@@ -104,6 +105,10 @@ export GIN_MODE=release
 ## Details
 
 ### Authorization Core
+
+The overview of system is shown below:
+
+![System Design](docs/design.svg)
 
 ### Enrollment Server
 
