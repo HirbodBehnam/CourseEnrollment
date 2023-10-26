@@ -104,13 +104,38 @@ export GIN_MODE=release
 
 ## Details
 
-### Authorization Core
-
 The overview of system is shown below:
 
 ![System Design](docs/design.svg)
 
+### Authorization Core
+
+The authorization core takes acts as a service which is exposed to the internet and users. Users and admins can login,
+enroll, get courses etc. It simply uses a REST API. Users and admins have to login with their username and password.
+JWT key is generated on each launch of application and nothing is cached. So users and staff can be added to database
+while the authorization cores are running. It's worth nothing that the user data is stored inside the JWT and there is
+no need for cache.
+
+One cool aspect of authorization core is that it can be horizontally distributed. You can simply just spawn multiple
+clients and connect each one to database and enrollment server. Just be aware that after authorization, each user must
+request the corresponding server in which they logged in. This is because the JWT key of each instance is different from
+others.
+
+It's worth noting that database access for auth core is read only and the transport between auth core and enrollment
+server is based on gRPC. The postman documentation is available in the docs folder.
+
 ### Enrollment Server
+
+The enrollment server is the heart of the system. It handles all the requests related to courses and students.
+Enrolling, getting the list of enrollments, force enrolling etc.
+
+The key to speed in this service is the caching. Once the application is loaded, ALL the course data is cached. This
+enables the service to do the calculations in memory. However, the downside is that if any student is added to system or
+updated without using this service, the service must be restarted. But this scenario is incredibly rare; how often do
+you have to add a student in mid-enrollment time?
+
+This service exposes its API as gRPC. It needs read only access to database only once It's starting up. I also relys on
+the broker to update the database (read the Batcher section for more info).
 
 ### Batcher
 
