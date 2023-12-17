@@ -9,6 +9,7 @@ A fast course enrollment service written with Go and backed by PostgreSQL and Ra
 * No disk bottleneck due to RabbitMQ (excluding RabbitMQ disk usage itself)
 * Student and Admins (staff) endpoints
 * Reserve Queues
+* Sex lock on courses
 * Partially horizontally scalable
 * REST API
 * JWT Authentication
@@ -137,7 +138,19 @@ you have to add a student in mid-enrollment time?
 This service exposes its API as gRPC. It needs read only access to database only once It's starting up. I also relys on
 the broker to update the database (read the Batcher section for more info).
 
+The enrollment server _can_ be horizontally distributed in some capacity. Each service needs to have distinct
+departments from other running services. Each request from the authorization core should specifically go to the
+corresponding enrollment service. The authorization core should be also changed a little.
+
 ### Batcher
+
+Batcher is a service which its solely is to read the changes from the RabbitMQ broker and apply them into database. It
+could be improved a little bit in terms of reliability with not enabling auto ack while subscribing to the queue and ack
+each message when we are sure that the data is written to disk.
+
+One important aspect of the batcher is that you cannot restart the Enrollment Service due to batcher. Batcher needs to
+empty the queue in RabbitMQ because Enrollment Server does not detect changes in database while it is up. Also, only and
+only one batcher needs to be up. The read order is important from the message queue.
 
 ## Benchmark in VirtualBox
 
