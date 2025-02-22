@@ -1,0 +1,66 @@
+services:
+  auth:
+    build:
+      context: .
+      target: auth_core
+    depends_on:
+      - database
+      - course_enrollment
+    environment:
+      DATABASE_URL: "postgres://course_enrollment:1234@database:5432/course_enrollment"
+      CORE_ADDRESS: "course_enrollment:80"
+      LISTEN_ADDRESS: ":80"
+      GIN_MODE: "release"
+    ports:
+      - "8888:80"
+
+  course_enrollment:
+    build:
+      context: .
+      target: course_enrollment_server
+    depends_on:
+      broker:
+        condition: service_healthy
+      database:
+        condition: service_started
+      batcher:
+        condition: service_started
+    environment:
+      DATABASE_URL: "postgres://course_enrollment:1234@database:5432/course_enrollment"
+      RABBITMQ_ADDRESS: "amqp://course_enrollment:1234@broker:5672/"
+      LISTEN_ADDRESS: ":80"
+
+  batcher:
+    build:
+      context: .
+      target: database_batcher
+    depends_on:
+      broker:
+        condition: service_healthy
+      database:
+        condition: service_started
+    environment:
+      DATABASE_URL: "postgres://course_enrollment:1234@database:5432/course_enrollment"
+      RABBITMQ_ADDRESS: "amqp://course_enrollment:1234@broker:5672/"
+
+  broker:
+    image: rabbitmq:4
+    environment:
+      RABBITMQ_DEFAULT_USER: "course_enrollment"
+      RABBITMQ_DEFAULT_PASS: "1234"
+    volumes:
+      - ./runtime/rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
+  database:
+    image: postgres
+    environment:
+      POSTGRES_USER: "course_enrollment"
+      POSTGRES_PASSWORD: "1234"
+    volumes:
+      - ./runtime/postgres/data:/var/lib/postgresql/data
+      - ${PWD}/database.sql:/docker-entrypoint-initdb.d/database.sql

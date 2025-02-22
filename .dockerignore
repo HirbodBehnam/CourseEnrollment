@@ -1,3 +1,6 @@
+Dockerfile
+docker-compose.yml
+.dockerignore
 .idea
 example_data/*.json
 example_data/*.sql

@@ -1,7 +1,3 @@
--- Drop old tables
-DROP TABLE IF EXISTS staff, students, departments, courses, enrolled_courses;
-DROP TYPE IF EXISTS sex;
-
 -- Create sex type
 CREATE TYPE sex AS ENUM ('male', 'female');
 
